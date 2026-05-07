@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receiving Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col">
+        <header class="bg-white border-b p-4 sticky top-0 z-10">
+            <h1 class="text-xl font-bold text-slate-800">Receiving Log</h1>
+            <div class="mt-3 relative">
+                <input type="text" id="searchInput" placeholder="Cari SKU atau Barang..." 
+                    class="w-full bg-slate-100 border-none rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 transition-all">
+                <svg class="w-4 h-4 absolute left-3 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4" id="itemList">
+            <div class="flex justify-center py-10">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+        </main>
+
+        <nav class="bg-white border-t p-4 flex justify-between items-center sticky bottom-0 safe-bottom">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                Total: <span id="totalCount" class="text-slate-800">0</span>
+            </div>
+            <button onclick="fetchData()" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-semibold shadow-lg shadow-blue-200 active:scale-95 transition-transform">
+                Refresh Data
+            </button>
+        </nav>
+
+        <div id="modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end sm:items-center justify-center">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 animate-slide-up">
+                <h2 id="modalTitle" class="text-lg font-bold text-slate-800 mb-1">Item Detail</h2>
+                <p id="modalSku" class="text-xs font-bold text-blue-600 uppercase mb-4"></p>
+                
+                <div class="mb-6">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Tanggal Kedatangan</label>
+                    <input type="date" id="dateInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 transition-all">
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-500 bg-slate-100 rounded-xl">Batal</button>
+                    <button onclick="saveData()" class="flex-1 py-4 font-bold text-white bg-blue-600 rounded-xl">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwQEsejr1HzpXCmKVcUyQdBscFaRPs6pYnmafShcBY42b9sgu9xSlfTEtUDfiK3xkog/exec"; 
+
+        let inventory = [];
+        let selectedSku = null;
+
+        async function fetchData() {
+            try {
+                const res = await fetch(API_URL);
+                inventory = await res.json();
+                renderItems(inventory);
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                document.getElementById('itemList').innerHTML = `<p class="text-center text-red-500 py-10">Gagal memuat data. Cek URL API.</p>`;
+            }
+        }
+
+        function renderItems(data) {
+            const container = document.getElementById('itemList');
+            const totalSpan = document.getElementById('totalCount');
+            totalSpan.innerText = data.length;
+            container.innerHTML = '';
+
+            data.forEach(item => {
+                const received = item['tanggal diterima'] !== "";
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-2xl mb-3 shadow-sm border border-slate-100 cursor-pointer active:bg-slate-50";
+                card.onclick = () => openModal(item);
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">${item.sku}</p>
+                            <h3 class="font-bold text-slate-800 leading-tight">${item['item description']}</h3>
+                            <p class="text-xs text-slate-400 mt-1">${item['nama supplier']}</p>
+                        </div>
+                        <div class="pt-1">
+                            ${received ? 
+                                '<span class="bg-green-100 text-green-700 p-1.5 rounded-full block text-xs">✔</span>' : 
+                                '<span class="bg-orange-100 text-orange-600 p-1.5 rounded-full block text-xs">⏳</span>'}
+                        </div>
+                    </div>
+                    ${received ? `<div class="mt-3 pt-3 border-t border-slate-50 text-[10px] text-slate-500">Diterima: <b>${item['tanggal diterima']}</b></div>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openModal(item) {
+            selectedSku = item.sku;
+            document.getElementById('modalTitle').innerText = item['item description'];
+            document.getElementById('modalSku').innerText = item.sku;
+            document.getElementById('dateInput').value = item['tanggal diterima'] || new Date().toISOString().split('T')[0];
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        async function saveData() {
+            const date = document.getElementById('dateInput').value;
+            if(!date) return;
+
+            // Optimistic update UI
+            const idx = inventory.findIndex(i => i.sku === selectedSku);
+            inventory[idx]['tanggal diterima'] = date;
+            renderItems(inventory);
+            closeModal();
+
+            // Kirim ke Google Sheets
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ sku: selectedSku, date: date })
+                });
+            } catch (e) { console.error("Update Error:", e); }
+        }
+
+        document.getElementById('searchInput').oninput = (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = inventory.filter(i => 
+                i.sku.toLowerCase().includes(val) || 
+                i['item description'].toLowerCase().includes(val)
+            );
+            renderItems(filtered);
+        };
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
