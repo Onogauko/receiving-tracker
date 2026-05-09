@@ -52,21 +52,19 @@
                     <p class="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-0.5">Ringkasan Riwayat Kedatangan Barang</p>
                 </div>
                 <div class="flex flex-col items-end pt-1">
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex items-center gap-2 mb-2">
                         <span id="lastSyncLabel" class="text-[8px] text-fuchsia-400 uppercase font-black tracking-tighter">Connecting...</span>
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
                     <div class="flex gap-2">
+                        <!-- Button Hapus Per Bulan -->
                         <button onclick="openCleanupModal()" class="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Hapus Data per Bulan">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
+                        <!-- Button Upload -->
                         <button onclick="openUploadModal()" class="p-2.5 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Upload Database">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
                         </button>
-                    </div>
-                    <div id="dbDateContainer" class="hidden text-right mt-2">
-                        <p class="text-[7px] text-slate-400 font-bold leading-none uppercase tracking-tighter">Data Sampai:</p>
-                        <p id="dbDateLabel" class="text-[9px] text-fuchsia-500 font-black leading-tight uppercase tracking-tighter mt-0.5"></p>
                     </div>
                 </div>
             </div>
@@ -84,36 +82,47 @@
             <div id="loading" class="space-y-4">
                 <div class="h-32 bg-fuchsia-50 border border-fuchsia-100 animate-pulse rounded-[2.2rem]"></div>
                 <div class="h-32 bg-fuchsia-50 border border-fuchsia-100 animate-pulse rounded-[2.2rem]"></div>
-                <div class="h-32 bg-fuchsia-50 border border-fuchsia-100 animate-pulse rounded-[2.2rem]"></div>
             </div>
-        <!-- Modal Hapus Per Bulan -->
+        </main>
+
+        <div class="sticky bottom-0 z-20 bg-white border-t border-fuchsia-100">
+            <nav class="p-5 flex justify-between items-center safe-bottom">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest">SKU Terdaftar</span>
+                    <span id="totalCount" class="text-xl font-black text-fuchsia-900">0</span>
+                </div>
+                <div id="dbDateContainer" class="hidden text-right">
+                    <p class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">Update:</p>
+                    <p id="dbDateLabel" class="text-[9px] text-fuchsia-500 font-black tracking-tighter"></p>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Modal Cleanup (Hapus Per Bulan) -->
         <div id="cleanupModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[110]">
             <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl flex flex-col animate-slide-up">
-                <div class="mb-6">
+                <div class="mb-6 text-center">
+                    <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </div>
                     <h2 class="text-2xl font-bold text-slate-900">Hapus Riwayat</h2>
-                    <p class="text-xs text-slate-500 mt-1">Hapus log kedatangan berdasarkan periode.</p>
+                    <p class="text-xs text-slate-500 mt-1">Pilih periode kedatangan yang ingin dihapus.</p>
                 </div>
 
                 <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Bulan</label>
-                        <select id="cleanupMonth" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
-                            <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
-                            <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
-                            <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
-                            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Tahun</label>
-                        <select id="cleanupYear" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
-                            <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
-                        </select>
-                    </div>
+                    <select id="cleanupMonth" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
+                        <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+                        <option value="04">April</option><option value="05" selected>Mei</option><option value="06">Juni</option>
+                        <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+                        <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                    </select>
+                    <select id="cleanupYear" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
+                        <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+                    </select>
                 </div>
 
                 <div class="mt-8 flex flex-col gap-3">
-                    <button id="cleanupBtn" onclick="processCleanup()" class="w-full py-4 font-bold text-white bg-red-500 rounded-2xl shadow-lg shadow-red-100 active:scale-95 transition-all">Hapus Data Permanen</button>
+                    <button id="cleanupBtn" onclick="processCleanup()" class="w-full py-4 font-bold text-white bg-red-500 rounded-2xl active:scale-95 transition-all">Hapus Permanen</button>
                     <button onclick="closeCleanupModal()" class="w-full py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl active:scale-95 transition-all">Batal</button>
                 </div>
             </div>
@@ -122,27 +131,42 @@
         <!-- Modal Upload -->
         <div id="uploadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[101]">
             <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-                <div class="mb-4">
+                <div class="mb-4 text-center">
                     <h2 class="text-2xl font-bold text-slate-900">Upload Database</h2>
-                    <p class="text-xs text-slate-500 mt-1">Pilih file CSV atau tempel data dari Excel.</p>
+                    <p class="text-xs text-slate-500">Gunakan file CSV atau tempel dari Excel.</p>
                 </div>
 
-                <div id="dropZone" class="mb-4 border-2 border-dashed border-fuchsia-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-fuchsia-50/30 hover:bg-fuchsia-50 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
+                <div id="dropZone" class="mb-4 border-2 border-dashed border-fuchsia-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-fuchsia-50/30 cursor-pointer" onclick="document.getElementById('fileInput').click()">
                     <input type="file" id="fileInput" accept=".csv, .txt" class="hidden" onchange="handleFileSelect(event)">
-                    <div class="p-3 bg-white rounded-full shadow-sm text-fuchsia-500 mb-2 group-hover:scale-110 transition-transform">
+                    <div class="p-3 bg-white rounded-full text-fuchsia-500 mb-2 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                     </div>
-                    <p class="text-[10px] font-bold text-fuchsia-600 uppercase tracking-widest">Klik untuk Pilih File .CSV</p>
-                    <p id="fileNameDisplay" class="text-[9px] text-slate-400 mt-1">Atau drag & drop file di sini</p>
+                    <p class="text-[10px] font-bold text-fuchsia-600 uppercase">Klik untuk Pilih File .CSV</p>
+                    <p id="fileNameDisplay" class="text-[9px] text-slate-400 mt-1">Atau tempel teks di bawah</p>
                 </div>
 
-                <textarea id="dataInput" placeholder="Tempel baris dari Excel di sini..." 
-                    class="flex-1 w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-[11px] focus:bg-white focus:border-fuchsia-500 outline-none resize-none placeholder:text-slate-300"></textarea>
+                <textarea id="dataInput" placeholder="Tempel baris Excel di sini..." class="w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[11px] outline-none resize-none"></textarea>
                 
                 <div class="mt-6 flex gap-3">
-                    <button onclick="closeUploadModal()" class="flex-1 py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-all">Batal</button>
-                    <button id="syncBtn" onclick="processDataUpload()" class="flex-[2] py-4 font-bold text-white bg-fuchsia-600 rounded-2xl shadow-lg shadow-fuchsia-100 hover:bg-fuchsia-700 transition-all">Mulai Sync Data</button>
+                    <button onclick="closeUploadModal()" class="flex-1 py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl">Batal</button>
+                    <button id="syncBtn" onclick="processDataUpload()" class="flex-[2] py-4 font-bold text-white bg-fuchsia-600 rounded-2xl shadow-lg">Sinkronkan ke Cloud</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal Detail -->
+        <div id="modal" class="fixed inset-0 bg-fuchsia-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
+                <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden"></div>
+                <div class="mb-6">
+                    <p id="modalSku" class="text-[10px] font-black text-fuchsia-600 uppercase tracking-widest mb-2"></p>
+                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
+                    <p id="modalSupplier" class="text-[10px] text-slate-400 mt-1 uppercase font-bold"></p>
+                </div>
+                <div class="flex-1 overflow-y-auto mb-6 pr-2">
+                    <div id="historyList" class="relative history-line pl-8 space-y-6"></div>
+                </div>
+                <button onclick="closeModal()" class="w-full py-4 font-bold text-white bg-fuchsia-800 rounded-2xl shadow-xl">Tutup</button>
             </div>
         </div>
     </div>
@@ -163,115 +187,41 @@
         const STORAGE_KEY = "receiving_tracker_data_v2";
         let groupedInventory = {};
 
-        // Penanganan Tanggal Format Indonesia DD/MM/YYYY
+        // --- CORE FUNCTIONS ---
+
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
-            const cleanStr = dateStr.trim();
-            
-            // Mencoba memisahkan dengan / atau -
-            const parts = cleanStr.split(/[\/\-]/);
+            const parts = dateStr.trim().split(/[\/\-]/);
             if (parts.length === 3) {
-                // Menghapus spasi dan memastikan format angka
                 const day = parts[0].padStart(2, '0');
                 const month = parts[1].padStart(2, '0');
                 let year = parts[2];
-                if (year.length === 2) year = "20" + year; // Handle 2 digit year
-
-                // Return format ISO YYYY-MM-DD untuk sorting yang benar
-                return `${year}-${month}-${day}`;
+                if (year.length === 2) year = "20" + year;
+                return `${year}-${month}-${day}`; // ISO Format
             }
-
-            // Fallback jika sudah format ISO
-            const d = new Date(cleanStr);
-            return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+            return null;
         }
 
         function formatDate(dateStr, long = false) {
             if (!dateStr) return "-";
             try {
                 const parts = dateStr.split('-');
-                const date = new Date(parts[0], parts[1] - 1, parts[2]);
+                const date = new Date(parts[0], parts[1]-1, parts[2]);
                 if (isNaN(date.getTime())) return dateStr;
                 const options = long ? { day: '2-digit', month: 'long', year: 'numeric' } : { day: '2-digit', month: 'short', year: 'numeric' };
                 return new Intl.DateTimeFormat('id-ID', options).format(date);
             } catch (e) { return dateStr; }
         }
 
-        // Fungsi Pemroses Input CSV / Excel
-        function parseInput(text) {
-            const lines = text.trim().split(/\r?\n/);
-            if (lines.length < 2) throw new Error("Data tidak cukup atau header tidak ditemukan.");
+        // --- UI ACTIONS ---
 
-            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
-            const headers = lines[0].split(delimiter).map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
-
-            const skuIdx = headers.findIndex(h => h.includes('sku'));
-            const descIdx = headers.findIndex(h => h.includes('item') || h.includes('description'));
-            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
-            const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
-
-            if (skuIdx === -1) throw new Error("Kolom SKU tidak ditemukan! Pastikan ada header 'sku'.");
-
-            const result = [];
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(delimiter);
-                if (cols.length < 2) continue;
-
-                result.push({
-                    sku: cols[skuIdx]?.trim() || "",
-                    description: cols[descIdx]?.trim() || "Tanpa Deskripsi",
-                    date: cols[dateIdx]?.trim() || "",
-                    supplier: cols[suppIdx]?.trim() || "-"
-                });
-            }
-            return result;
-        }
-
-        async function processDataUpload() {
-            const input = document.getElementById('dataInput').value;
-            const syncBtn = document.getElementById('syncBtn');
         function openCleanupModal() { document.getElementById('cleanupModal').classList.remove('hidden'); }
         function closeCleanupModal() { document.getElementById('cleanupModal').classList.add('hidden'); }
+        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
-        async function processCleanup() {
-            const month = document.getElementById('cleanupMonth').value;
-            const year = document.getElementById('cleanupYear').value;
-            const cleanupBtn = document.getElementById('cleanupBtn');
-            
-            const confirmMsg = `Hapus semua riwayat kedatangan bulan ${month}/${year}? Tindakan ini tidak bisa dibatalkan.`;
-            // Menggunakan message box sederhana (notifikasi) daripada confirm() browser yang mengganggu
-            if (!confirm(confirmMsg)) return; 
-
-            cleanupBtn.disabled = true;
-            cleanupBtn.innerText = "Menghapus...";
-
-            try {
-                const updatedData = { ...groupedInventory };
-                let removedCount = 0;
-
-                Object.keys(updatedData).forEach(sku => {
-                    const originalLength = updatedData[sku].arrivals.length;
-                    // Filter: Simpan hanya yang BULAN dan TAHUN-nya tidak cocok dengan pilihan
-                    updatedData[sku].arrivals = updatedData[sku].arrivals.filter(dateStr => {
-                        const [y, m, d] = dateStr.split('-');
-                        return !(m === month && y === year);
-                    });
-                    
-                    if (originalLength !== updatedData[sku].arrivals.length) {
-                        removedCount++;
-                    }
-                });
-
-                await db.ref('inventory').set(updatedData);
-                showNotification(`Pembersihan Selesai! Data dari ${removedCount} SKU telah diperbarui.`);
-                closeCleanupModal();
-            } catch (e) {
-                showNotification("Gagal menghapus: " + e.message, "error");
-            } finally {
-                cleanupBtn.disabled = false;
-                cleanupBtn.innerText = "Hapus Data Permanen";
-            }
-        }
+        // --- DATABASE LOGIC ---
 
         function fetchData() {
             const statusDot = document.getElementById('statusDot');
@@ -285,44 +235,138 @@
                     renderItems(Object.values(data));
                     updateDatabaseDateLabel();
                     statusDot.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
-                    lastSyncLabel.innerText = "Cloud Terhubung";
+                    lastSyncLabel.innerText = "Cloud Aktif";
                 } else {
+                    groupedInventory = {};
                     renderItems([]);
-                    lastSyncLabel.innerText = "Database Kosong";
+                    lastSyncLabel.innerText = "DB Kosong";
                 }
             });
         }
 
+        // --- STREAMING_CHUNK:Parsing inputs and rendering list... ---
+        function parseInput(text) {
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) throw new Error("Format salah (Data tidak cukup).");
+
+            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+            const headers = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/[^a-z0-9]/g, ''));
+
+            const skuIdx = headers.findIndex(h => h.includes('sku'));
+            const descIdx = headers.findIndex(h => h.includes('item') || h.includes('desc'));
+            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
+            const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
+
+            if (skuIdx === -1) throw new Error("Header 'sku' tidak ditemukan.");
+
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(delimiter);
+                if (cols.length < 2) continue;
+                result.push({
+                    sku: cols[skuIdx]?.trim().padStart(7, '0') || "",
+                    description: cols[descIdx]?.trim() || "Tanpa Deskripsi",
+                    date: parseIndoDate(cols[dateIdx]),
+                    supplier: cols[suppIdx]?.trim() || "-"
+                });
+            }
+            return result;
+        }
+
+        async function processDataUpload() {
+            const input = document.getElementById('dataInput').value;
+            const syncBtn = document.getElementById('syncBtn');
+            if (!input) return alert("Pilih file atau tempel teks dulu.");
+
+            syncBtn.disabled = true;
+            syncBtn.innerText = "Memproses...";
+
+            try {
+                const data = parseInput(input);
+                const updatedData = { ...groupedInventory };
+
+                data.forEach(item => {
+                    if (!updatedData[item.sku]) {
+                        updatedData[item.sku] = { sku: item.sku, description: item.description, supplier: item.supplier, arrivals: [] };
+                    }
+                    if (item.date && !updatedData[item.sku].arrivals.includes(item.date)) {
+                        updatedData[item.sku].arrivals.push(item.date);
+                        updatedData[item.sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
+                    }
+                });
+
+                await db.ref('inventory').set(updatedData);
+                alert("Data berhasil disinkronkan ke Cloud!");
+                closeUploadModal();
+                document.getElementById('dataInput').value = "";
+            } catch (e) {
+                alert("Gagal: " + e.message);
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.innerText = "Sinkronkan ke Cloud";
+            }
+        }
+
+        async function processCleanup() {
+            const month = document.getElementById('cleanupMonth').value;
+            const year = document.getElementById('cleanupYear').value;
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            
+            if (!confirm(`Hapus SEMUA riwayat kedatangan bulan ${month}/${year}?`)) return;
+
+            cleanupBtn.disabled = true;
+            cleanupBtn.innerText = "Menghapus...";
+
+            try {
+                const updatedData = { ...groupedInventory };
+                Object.keys(updatedData).forEach(sku => {
+                    if (updatedData[sku].arrivals) {
+                        updatedData[sku].arrivals = updatedData[sku].arrivals.filter(dateStr => {
+                            const [y, m, d] = dateStr.split('-');
+                            return !(m === month && y === year);
+                        });
+                    }
+                });
+
+                await db.ref('inventory').set(updatedData);
+                alert("Data periode tersebut telah dibersihkan.");
+                closeCleanupModal();
+            } catch (e) {
+                alert("Gagal hapus: " + e.message);
+            } finally {
+                cleanupBtn.disabled = false;
+                cleanupBtn.innerText = "Hapus Permanen";
+            }
+        }
+
+        // --- STREAMING_CHUNK:Rendering and utility... ---
         function renderItems(items) {
             const container = document.getElementById('itemList');
             document.getElementById('totalCount').innerText = items.length;
-            
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold text-fuchsia-300 italic">Database Kosong</div>`;
+                container.innerHTML = `<div class="text-center py-20 opacity-30 font-bold italic">Belum ada data</div>`;
                 return;
             }
-            
             container.innerHTML = '';
             items.forEach(item => {
                 const count = item.arrivals ? item.arrivals.length : 0;
                 const lastDate = count > 0 ? formatDate(item.arrivals[0]) : 'Belum Ada';
-                
                 const card = document.createElement('div');
-                card.className = "p-6 rounded-[2.2rem] mb-5 border bg-white border-fuchsia-100 shadow-sm transition-all cursor-pointer active:scale-[0.96]";
+                card.className = "p-6 rounded-[2.2rem] mb-5 border bg-white border-fuchsia-100 shadow-sm cursor-pointer active:scale-95 transition-all";
                 card.onclick = () => openModal(item.sku);
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-4">
                         <div class="flex-1">
-                            <span class="text-[9px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-1.5 block">${item.sku}</span>
+                            <span class="text-[9px] font-black text-fuchsia-600 uppercase tracking-widest mb-1 block">${item.sku}</span>
                             <h3 class="font-bold text-slate-900 leading-tight text-md mb-2 line-clamp-2">${item.description}</h3>
-                            <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
+                            <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
                         </div>
                         <div class="shrink-0">
-                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-300'} px-3 py-1 rounded-full text-[9px] font-black shadow-sm uppercase">${count}x Masuk</div>
+                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-200'} px-3 py-1 rounded-full text-[9px] font-black">${count}x</div>
                         </div>
                     </div>
-                    <div class="mt-5 pt-4 border-t border-fuchsia-50 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-fuchsia-300 uppercase tracking-[0.1em]">Kedatangan terakhir</span>
+                    <div class="mt-4 pt-4 border-t border-fuchsia-50 flex items-center justify-between">
+                        <span class="text-[9px] font-black text-fuchsia-300 uppercase">Terakhir masuk</span>
                         <span class="text-xs font-bold text-fuchsia-800">${lastDate}</span>
                     </div>
                 `;
@@ -331,26 +375,17 @@
         }
 
         function updateDatabaseDateLabel() {
-            let latestDate = null;
+            let latest = null;
             Object.values(groupedInventory).forEach(item => {
                 if (item.arrivals && item.arrivals.length > 0) {
                     const d = new Date(item.arrivals[0]);
-                    if (!latestDate || d > latestDate) latestDate = d;
+                    if (!latest || d > latest) latest = d;
                 }
             });
-            if (latestDate) {
-                document.getElementById('dbDateLabel').innerText = formatDate(latestDate.toISOString().split('T')[0], true);
+            if (latest) {
+                document.getElementById('dbDateLabel').innerText = formatDate(latest.toISOString().split('T')[0], true);
                 document.getElementById('dbDateContainer').classList.remove('hidden');
             }
-        }
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            document.getElementById('fileNameDisplay').innerText = "File: " + file.name;
-            const reader = new FileReader();
-            reader.onload = (e) => document.getElementById('dataInput').value = e.target.result;
-            reader.readAsText(file);
         }
 
         function openModal(sku) {
@@ -358,36 +393,33 @@
             if (!item) return;
             document.getElementById('modalTitle').innerText = item.description;
             document.getElementById('modalSku').innerText = "KODE SKU: " + item.sku;
-            document.getElementById('modalSupplier').innerText = "Supplier: " + item.supplier;
+            document.getElementById('modalSupplier').innerText = item.supplier;
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
-            
-            const sortedArrivals = [...(item.arrivals || [])];
-            sortedArrivals.forEach((date, i) => {
-                const entry = document.createElement('div');
-                entry.className = "relative";
-                entry.innerHTML = `
-                    <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
-                    <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
-                        <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${sortedArrivals.length - i}</p>
-                        <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
-                    </div>
-                `;
-                historyList.appendChild(entry);
-            });
+            if (item.arrivals) {
+                item.arrivals.forEach((date, i) => {
+                    const entry = document.createElement('div');
+                    entry.className = "relative";
+                    entry.innerHTML = `
+                        <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
+                        <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
+                            <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${item.arrivals.length - i}</p>
+                            <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
+                        </div>
+                    `;
+                    historyList.appendChild(entry);
+                });
+            }
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
-        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
-        
-        function showNotification(msg, type = "success") {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl font-bold text-white text-sm animate-slide-up ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
-            toast.innerText = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('fileNameDisplay').innerText = "File: " + file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => { document.getElementById('dataInput').value = e.target.result; };
+            reader.readAsText(file);
         }
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -398,7 +430,7 @@
 
         window.onclick = (e) => { 
             if(e.target.id === 'modal') closeModal(); 
-            if(e.target.id === 'uploadModal') closeCleanupModal(); 
+            if(e.target.id === 'uploadModal') closeUploadModal(); 
             if(e.target.id === 'cleanupModal') closeCleanupModal(); 
         };
         
