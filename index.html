@@ -41,9 +41,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
-        
-        /* Ensure the modal is always on top */
-        #uploadModal { z-index: 1000; }
     </style>
 </head>
 <body class="antialiased text-slate-900">
@@ -60,7 +57,6 @@
                         <span id="lastSyncLabel" class="text-[8px] text-fuchsia-400 uppercase font-black tracking-tighter">Connecting...</span>
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
-                    <!-- Database Button (Clickable Fixed) -->
                     <button onclick="openUploadModal()" class="p-2.5 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Upload Database">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
                     </button>
@@ -99,12 +95,6 @@
                     <span id="refreshText">Update Cloud</span>
                 </button>
             </nav>
-            
-            <div class="pb-4 px-5 text-center">
-                <p class="text-[9px] font-medium text-fuchsia-300 tracking-wider">
-                    © 2026 Receiving Tracker — by Jenta Zebua MCT
-                </p>
-            </div>
         </div>
 
         <!-- Modal Riwayat Detail -->
@@ -113,7 +103,7 @@
                 <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden shrink-0"></div>
                 <div class="mb-6 shrink-0">
                     <p id="modalSku" class="text-[10px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-2"></p>
-                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
+                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight text-lg">Detail Riwayat</h2>
                     <p id="modalSupplier" class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider"></p>
                 </div>
                 <div class="flex-1 overflow-y-auto mb-6 pr-2">
@@ -125,8 +115,8 @@
             </div>
         </div>
 
-        <!-- Modal Upload CSV/Excel -->
-        <div id="uploadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <!-- Modal Upload -->
+        <div id="uploadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[101]">
             <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl flex flex-col overflow-hidden animate-slide-up">
                 <div class="mb-4">
                     <h2 class="text-2xl font-bold text-slate-900">Upload Database</h2>
@@ -141,14 +131,8 @@
                     <p class="text-[10px] font-bold text-fuchsia-600 uppercase tracking-widest">Klik untuk Pilih File .CSV</p>
                     <p id="fileNameDisplay" class="text-[9px] text-slate-400 mt-1">Atau drag & drop file di sini</p>
                 </div>
-                
-                <div class="relative flex items-center mb-4">
-                    <div class="flex-grow border-t border-slate-100"></div>
-                    <span class="mx-3 text-[9px] font-black text-slate-300 uppercase">Atau Tempel Manual</span>
-                    <div class="flex-grow border-t border-slate-100"></div>
-                </div>
 
-                <textarea id="dataInput" placeholder="sku	item description	anggal diterima	nama supplier..." 
+                <textarea id="dataInput" placeholder="Tempel baris dari Excel di sini..." 
                     class="flex-1 w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-[11px] focus:bg-white focus:border-fuchsia-500 outline-none resize-none placeholder:text-slate-300"></textarea>
                 
                 <div class="mt-6 flex gap-3">
@@ -160,45 +144,94 @@
     </div>
 
     <script>
-        /* ... existing firebase code ... */
+        const firebaseConfig = {
+            apiKey: "AIzaSyAB1YK8Jzzhot_6KTgnBtCODPq5BVFrH_c",
+            authDomain: "magenta-aeon.firebaseapp.com",
+            databaseURL: "https://magenta-aeon-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "magenta-aeon",
+            storageBucket: "magenta-aeon.firebasestorage.app",
+            messagingSenderId: "508296835246",
+            appId: "1:508296835246:web:7164e0d1e81200de6ffd3f"
+        };
 
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const STORAGE_KEY = "receiving_tracker_data_v2";
+        let groupedInventory = {};
 
-            const fileNameDisplay = document.getElementById('fileNameDisplay');
-            fileNameDisplay.innerText = "Membaca: " + file.name;
-            fileNameDisplay.classList.add('text-fuchsia-600', 'font-bold');
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                document.getElementById('dataInput').value = text;
-                showNotification("File berhasil dimuat! Klik 'Mulai Sync' untuk memproses.");
-            };
-            reader.readAsText(file);
+        function formatDate(dateStr, long = false) {
+            if (!dateStr) return "-";
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const options = long ? { day: '2-digit', month: 'long', year: 'numeric' } : { day: '2-digit', month: 'short', year: 'numeric' };
+                return new Intl.DateTimeFormat('id-ID', options).format(date);
+            } catch (e) { return dateStr; }
         }
 
-        const dropZone = document.getElementById('dropZone');
-        if (dropZone) {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                if (files.length) {
-                    document.getElementById('fileInput').files = files;
-                    handleFileSelect({ target: { files: files } });
+        async function fetchData() {
+            const statusDot = document.getElementById('statusDot');
+            const lastSyncLabel = document.getElementById('lastSyncLabel');
+            
+            db.ref('inventory').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    groupedInventory = data;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(groupedInventory));
+                    renderItems(Object.values(groupedInventory));
+                    updateDatabaseDateLabel();
+                    statusDot.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
+                    lastSyncLabel.innerText = "Terhubung Cloud";
+                } else {
+                    renderItems([]);
+                    lastSyncLabel.innerText = "Database Kosong";
                 }
             });
         }
 
-        /* ... existing parseInput and processDataUpload code ... */
+        function parseInput(rawText) {
+            const lines = rawText.trim().split(/\r?\n/);
+            if (lines.length < 2) return [];
+
+            // Robust Delimiter Detection
+            const firstLine = lines[0];
+            let delimiter = ',';
+            if (firstLine.includes('\t')) delimiter = '\t';
+            else if (firstLine.includes(';')) delimiter = ';';
+
+            // Clean & Map Headers
+            const headers = firstLine.split(delimiter).map(h => h.toLowerCase().trim().replace(/[^a-z0-9 ]/g, ""));
+            
+            const map = {
+                sku: headers.findIndex(h => h.includes('sku') || h.includes('kode')),
+                desc: headers.findIndex(h => h.includes('item') || h.includes('desc') || h.includes('nama barang')),
+                date: headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('diterima') || h.includes('date')),
+                supp: headers.findIndex(h => h.includes('supplier') || h.includes('nama supplier') || h.includes('vendor'))
+            };
+
+            // Validasi Header Minimum
+            if (map.sku === -1 || map.date === -1) {
+                console.error("Missing headers:", map);
+                throw new Error("Header 'SKU' atau 'Tanggal' tidak ditemukan.");
+            }
+
+            const results = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const cols = line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
+                if (cols.length < 2) continue;
+
+                results.push({
+                    sku: cols[map.sku] || 'N/A',
+                    description: map.desc !== -1 ? cols[map.desc] : 'Tanpa Nama',
+                    date: map.date !== -1 ? cols[map.date] : '',
+                    supplier: map.supp !== -1 ? cols[map.supp] : '-'
+                });
+            }
+            return results;
+        }
 
         async function processDataUpload() {
             const input = document.getElementById('dataInput').value;
@@ -210,16 +243,16 @@
 
             try {
                 const rawData = parseInput(input);
-                if (rawData.length === 0) throw new Error("Tidak ada data valid");
+                if (rawData.length === 0) throw new Error("Tidak ada data baris yang valid");
 
                 const newGrouped = {};
                 rawData.forEach(item => {
-                    const sku = String(item.sku || 'N/A').trim();
+                    const sku = String(item.sku).trim();
                     if (!newGrouped[sku]) {
                         newGrouped[sku] = {
                             sku: sku,
-                            description: String(item.description || 'Tanpa Deskripsi'),
-                            supplier: String(item.supplier || '-'),
+                            description: String(item.description),
+                            supplier: String(item.supplier),
                             arrivals: []
                         };
                     }
@@ -230,97 +263,20 @@
                 
                 closeUploadModal();
                 document.getElementById('dataInput').value = "";
-                document.getElementById('fileNameDisplay').innerText = "Atau drag & drop file di sini";
-                document.getElementById('fileInput').value = "";
                 showNotification("Berhasil Sinkronisasi " + Object.keys(newGrouped).length + " SKU!");
             } catch (e) {
                 console.error(e);
-                showNotification("Gagal! Cek format file/header.", "error");
+                showNotification(e.message || "Gagal! Periksa header file Anda.", "error");
             } finally {
                 syncBtn.disabled = false;
                 syncBtn.innerText = "Mulai Sync Data";
             }
         }
 
-        function parseInput(rawText) {
-            // Detect if JSON or CSV
-            rawText = rawText.trim();
-            if (rawText.startsWith('[') || rawText.startsWith('{')) {
-                return JSON.parse(rawText);
-            }
-
-            // CSV / Excel TSV Parsing
-            const lines = rawText.split(/\r?\n/);
-            if (lines.length < 2) return [];
-
-            // Detect delimiter (Tab or Comma)
-            const firstLine = lines[0];
-            const delimiter = firstLine.includes('\t') ? '\t' : (firstLine.includes(';') ? ';' : ',');
-            
-            const headers = lines[0].split(delimiter).map(h => h.toLowerCase().trim());
-            
-            // Find Index Mapping
-            const map = {
-                sku: headers.findIndex(h => h.includes('sku') || h.includes('kode')),
-                desc: headers.findIndex(h => h.includes('description') || h.includes('nama barang') || h.includes('deskripsi')),
-                date: headers.findIndex(h => h.includes('diterima') || h.includes('tanggal') || h.includes('date')),
-                supp: headers.findIndex(h => h.includes('supplier') || h.includes('nama supplier') || h.includes('vendor'))
-            };
-
-            const results = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
-                
-                results.push({
-                    sku: map.sku !== -1 ? cols[map.sku] : 'N/A',
-                    description: map.desc !== -1 ? cols[map.desc] : 'Tanpa Nama',
-                    date: map.date !== -1 ? cols[map.date] : '',
-                    supplier: map.supp !== -1 ? cols[map.supp] : '-'
-                });
-            }
-            return results;
-        }
-
-        async function processDataUpload() {
-            const input = document.getElementById('dataInput').value;
-            if (!input.trim()) return;
-
-            try {
-                const rawData = parseInput(input);
-                const newGrouped = {};
-
-                rawData.forEach(item => {
-                    const sku = String(item.sku || 'N/A');
-                    if (!newGrouped[sku]) {
-                        newGrouped[sku] = {
-                            sku: sku,
-                            description: String(item.description || 'Tanpa Deskripsi'),
-                            supplier: String(item.supplier || '-'),
-                            arrivals: []
-                        };
-                    }
-                    if (item.date) newGrouped[sku].arrivals.push(item.date);
-                });
-
-                // Overwrite the Firebase inventory node
-                await db.ref('inventory').set(newGrouped);
-                
-                closeUploadModal();
-                document.getElementById('dataInput').value = "";
-                showNotification("Berhasil Sinkronisasi " + Object.keys(newGrouped).length + " SKU!");
-            } catch (e) {
-                console.error(e);
-                showNotification("Format Salah! Pastikan ada Header.", "error");
-            }
-        }
-
         function renderItems(items) {
             const container = document.getElementById('itemList');
-            const totalCount = document.getElementById('totalCount');
-            if(totalCount) totalCount.innerText = items.length;
+            document.getElementById('totalCount').innerText = items.length;
             
-            if (!container) return;
             if (items.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold text-fuchsia-300 italic">Database Kosong</div>`;
                 return;
@@ -339,7 +295,7 @@
                     <div class="flex justify-between items-start gap-4">
                         <div class="flex-1">
                             <span class="text-[9px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-1.5 block">${item.sku}</span>
-                            <h3 class="font-bold text-slate-900 leading-tight text-lg mb-2 line-clamp-2">${item.description}</h3>
+                            <h3 class="font-bold text-slate-900 leading-tight text-md mb-2 line-clamp-2">${item.description}</h3>
                             <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
                         </div>
                         <div class="shrink-0">
@@ -356,64 +312,57 @@
         }
 
         function updateDatabaseDateLabel() {
-            const dbDateLabel = document.getElementById('dbDateLabel');
-            const dbDateContainer = document.getElementById('dbDateContainer');
             let latestDate = null;
-
             Object.values(groupedInventory).forEach(item => {
                 if (item.arrivals) {
                     item.arrivals.forEach(dateStr => {
                         const d = new Date(dateStr);
-                        if (!isNaN(d.getTime())) {
-                            if (!latestDate || d > latestDate) latestDate = d;
-                        }
+                        if (!isNaN(d.getTime())) if (!latestDate || d > latestDate) latestDate = d;
                     });
                 }
             });
-
-            if (latestDate && dbDateLabel && dbDateContainer) {
-                dbDateLabel.innerText = formatDate(latestDate, true);
-                dbDateContainer.classList.remove('hidden');
+            if (latestDate) {
+                document.getElementById('dbDateLabel').innerText = formatDate(latestDate, true);
+                document.getElementById('dbDateContainer').classList.remove('hidden');
             }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('fileNameDisplay').innerText = "File: " + file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => document.getElementById('dataInput').value = e.target.result;
+            reader.readAsText(file);
         }
 
         function openModal(sku) {
             const item = groupedInventory[sku];
             if (!item) return;
-            
             document.getElementById('modalTitle').innerText = item.description;
             document.getElementById('modalSku').innerText = "KODE SKU: " + item.sku;
             document.getElementById('modalSupplier').innerText = "Supplier: " + item.supplier;
-            
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
-            
-            const arrivals = item.arrivals || [];
-            const sortedArrivals = [...arrivals].sort((a, b) => new Date(b) - new Date(a));
-            
-            if (sortedArrivals.length === 0) {
-                historyList.innerHTML = `<p class="text-fuchsia-300 text-sm italic py-4">Belum ada riwayat.</p>`;
-            } else {
-                sortedArrivals.forEach((date, i) => {
-                    const entry = document.createElement('div');
-                    entry.className = "relative";
-                    entry.innerHTML = `
-                        <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
-                        <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
-                            <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${sortedArrivals.length - i}</p>
-                            <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
-                        </div>
-                    `;
-                    historyList.appendChild(entry);
-                });
-            }
+            const sortedArrivals = [...(item.arrivals || [])].sort((a, b) => new Date(b) - new Date(a));
+            sortedArrivals.forEach((date, i) => {
+                const entry = document.createElement('div');
+                entry.className = "relative";
+                entry.innerHTML = `
+                    <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
+                    <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
+                        <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${sortedArrivals.length - i}</p>
+                        <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
+                    </div>
+                `;
+                historyList.appendChild(entry);
+            });
             document.getElementById('modal').classList.remove('hidden');
         }
 
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
         function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
-
         function showNotification(msg, type = "success") {
             const toast = document.createElement('div');
             toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl font-bold text-white text-sm animate-slide-up ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
@@ -424,19 +373,11 @@
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
-            const filtered = Object.values(groupedInventory).filter(i => 
-                i.sku.toLowerCase().includes(val) || 
-                i.description.toLowerCase().includes(val) ||
-                i.supplier.toLowerCase().includes(val)
-            );
+            const filtered = Object.values(groupedInventory).filter(i => i.sku.toLowerCase().includes(val) || i.description.toLowerCase().includes(val) || i.supplier.toLowerCase().includes(val));
             renderItems(filtered);
         });
 
-        window.onclick = (e) => { 
-            if(e.target.id === 'modal') closeModal();
-            if(e.target.id === 'uploadModal') closeUploadModal();
-        };
-
+        window.onclick = (e) => { if(e.target.id === 'modal') closeModal(); if(e.target.id === 'uploadModal') closeUploadModal(); };
         window.onload = fetchData;
     </script>
 </body>
