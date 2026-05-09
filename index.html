@@ -56,9 +56,14 @@
                         <span id="lastSyncLabel" class="text-[8px] text-fuchsia-400 uppercase font-black tracking-tighter">Connecting...</span>
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
-                    <button onclick="openUploadModal()" class="p-2.5 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Upload Database">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="openCleanupModal()" class="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Hapus Data per Bulan">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                        <button onclick="openUploadModal()" class="p-2.5 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Upload Database">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
+                        </button>
+                    </div>
                     <div id="dbDateContainer" class="hidden text-right mt-2">
                         <p class="text-[7px] text-slate-400 font-bold leading-none uppercase tracking-tighter">Data Sampai:</p>
                         <p id="dbDateLabel" class="text-[9px] text-fuchsia-500 font-black leading-tight uppercase tracking-tighter mt-0.5"></p>
@@ -81,35 +86,35 @@
                 <div class="h-32 bg-fuchsia-50 border border-fuchsia-100 animate-pulse rounded-[2.2rem]"></div>
                 <div class="h-32 bg-fuchsia-50 border border-fuchsia-100 animate-pulse rounded-[2.2rem]"></div>
             </div>
-        </main>
+        <!-- Modal Hapus Per Bulan -->
+        <div id="cleanupModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[110]">
+            <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl flex flex-col animate-slide-up">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Hapus Riwayat</h2>
+                    <p class="text-xs text-slate-500 mt-1">Hapus log kedatangan berdasarkan periode.</p>
+                </div>
 
-        <div class="sticky bottom-0 z-20 bg-white border-t border-fuchsia-100 shadow-[0_-10px_25px_rgba(0,0,0,0.03)]">
-            <nav class="p-5 flex justify-between items-center safe-bottom">
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest">SKU Terdaftar</span>
-                    <span id="totalCount" class="text-xl font-black text-fuchsia-900">0</span>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Bulan</label>
+                        <select id="cleanupMonth" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
+                            <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+                            <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+                            <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+                            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Tahun</label>
+                        <select id="cleanupYear" class="w-full mt-1 bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
+                            <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+                        </select>
+                    </div>
                 </div>
-                <button id="refreshBtn" onclick="fetchData()" class="bg-fuchsia-700 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-3 active:scale-95 transition-all shadow-lg shadow-fuchsia-200">
-                    <div id="btnSpinner" class="spinner hidden"></div>
-                    <span id="refreshText">Update Cloud</span>
-                </button>
-            </nav>
-        </div>
 
-        <!-- Modal Riwayat Detail -->
-        <div id="modal" class="fixed inset-0 bg-fuchsia-900/60 backdrop-blur-sm z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
-                <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden shrink-0"></div>
-                <div class="mb-6 shrink-0">
-                    <p id="modalSku" class="text-[10px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-2"></p>
-                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
-                    <p id="modalSupplier" class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider"></p>
-                </div>
-                <div class="flex-1 overflow-y-auto mb-6 pr-2">
-                    <div id="historyList" class="relative history-line pl-8 space-y-6"></div>
-                </div>
-                <div class="flex gap-4 pt-4 border-t border-fuchsia-50 shrink-0">
-                    <button onclick="closeModal()" class="flex-1 py-4.5 font-bold text-white bg-fuchsia-800 rounded-2xl shadow-xl active:scale-[0.98] transition-all">Tutup Riwayat</button>
+                <div class="mt-8 flex flex-col gap-3">
+                    <button id="cleanupBtn" onclick="processCleanup()" class="w-full py-4 font-bold text-white bg-red-500 rounded-2xl shadow-lg shadow-red-100 active:scale-95 transition-all">Hapus Data Permanen</button>
+                    <button onclick="closeCleanupModal()" class="w-full py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl active:scale-95 transition-all">Batal</button>
                 </div>
             </div>
         </div>
@@ -225,46 +230,46 @@
         async function processDataUpload() {
             const input = document.getElementById('dataInput').value;
             const syncBtn = document.getElementById('syncBtn');
-            if (!input.trim()) return showNotification("Data kosong!", "error");
+        function openCleanupModal() { document.getElementById('cleanupModal').classList.remove('hidden'); }
+        function closeCleanupModal() { document.getElementById('cleanupModal').classList.add('hidden'); }
 
-            syncBtn.disabled = true;
-            syncBtn.innerText = "Memproses...";
+        async function processCleanup() {
+            const month = document.getElementById('cleanupMonth').value;
+            const year = document.getElementById('cleanupYear').value;
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            
+            const confirmMsg = `Hapus semua riwayat kedatangan bulan ${month}/${year}? Tindakan ini tidak bisa dibatalkan.`;
+            // Menggunakan message box sederhana (notifikasi) daripada confirm() browser yang mengganggu
+            if (!confirm(confirmMsg)) return; 
+
+            cleanupBtn.disabled = true;
+            cleanupBtn.innerText = "Menghapus...";
 
             try {
-                const rawData = parseInput(input);
-                const newGrouped = {};
+                const updatedData = { ...groupedInventory };
+                let removedCount = 0;
 
-                rawData.forEach(item => {
-                    const sku = String(item.sku).padStart(7, '0');
-                    if (!newGrouped[sku]) {
-                        newGrouped[sku] = {
-                            sku: sku,
-                            description: item.description,
-                            supplier: item.supplier,
-                            arrivals: []
-                        };
-                    }
-                    const standardizedDate = parseIndoDate(item.date);
-                    if (standardizedDate) {
-                        if (!newGrouped[sku].arrivals.includes(standardizedDate)) {
-                            newGrouped[sku].arrivals.push(standardizedDate);
-                        }
+                Object.keys(updatedData).forEach(sku => {
+                    const originalLength = updatedData[sku].arrivals.length;
+                    // Filter: Simpan hanya yang BULAN dan TAHUN-nya tidak cocok dengan pilihan
+                    updatedData[sku].arrivals = updatedData[sku].arrivals.filter(dateStr => {
+                        const [y, m, d] = dateStr.split('-');
+                        return !(m === month && y === year);
+                    });
+                    
+                    if (originalLength !== updatedData[sku].arrivals.length) {
+                        removedCount++;
                     }
                 });
 
-                // Urutkan tanggal arrivals terbaru di atas
-                Object.keys(newGrouped).forEach(sku => {
-                    newGrouped[sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
-                });
-
-                await db.ref('inventory').set(newGrouped);
-                closeUploadModal();
-                showNotification("Berhasil Sinkronisasi " + Object.keys(newGrouped).length + " SKU!");
+                await db.ref('inventory').set(updatedData);
+                showNotification(`Pembersihan Selesai! Data dari ${removedCount} SKU telah diperbarui.`);
+                closeCleanupModal();
             } catch (e) {
-                showNotification(e.message, "error");
+                showNotification("Gagal menghapus: " + e.message, "error");
             } finally {
-                syncBtn.disabled = false;
-                syncBtn.innerText = "Mulai Sync Data";
+                cleanupBtn.disabled = false;
+                cleanupBtn.innerText = "Hapus Data Permanen";
             }
         }
 
@@ -393,7 +398,8 @@
 
         window.onclick = (e) => { 
             if(e.target.id === 'modal') closeModal(); 
-            if(e.target.id === 'uploadModal') closeUploadModal(); 
+            if(e.target.id === 'uploadModal') closeCleanupModal(); 
+            if(e.target.id === 'cleanupModal') closeCleanupModal(); 
         };
         
         window.onload = fetchData;
