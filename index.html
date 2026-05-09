@@ -51,6 +51,7 @@
                     <h1 class="text-2xl font-extrabold tracking-tight text-fuchsia-900">Receiving Log</h1>
                     <p class="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-0.5">Ringkasan Riwayat Kedatangan Barang</p>
                     
+                    <!-- Info Data Update Pindah Ke Sini -->
                     <div id="dbDateContainer" class="hidden mt-2 flex items-center gap-1.5 bg-fuchsia-50/50 w-fit px-2 py-0.5 rounded-md border border-fuchsia-100/50">
                         <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">Data Update:</span>
                         <span id="dbDateLabel" class="text-[9px] text-fuchsia-600 font-black tracking-tighter uppercase"></span>
@@ -142,6 +143,9 @@
                 </div>
                 <div id="dropZone" class="mb-4 border-2 border-dashed border-fuchsia-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-fuchsia-50/30 cursor-pointer" onclick="document.getElementById('fileInput').click()">
                     <input type="file" id="fileInput" accept=".csv, .txt" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="text-fuchsia-400 mb-1">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    </div>
                     <p class="text-[9px] font-bold text-fuchsia-600 uppercase tracking-widest">Klik Pilih File .CSV</p>
                     <p id="fileNameDisplay" class="text-[8px] text-slate-400 mt-1">Atau tempel teks di bawah</p>
                 </div>
@@ -211,7 +215,6 @@
             } catch (e) { return dateStr; }
         }
 
-        // --- CORE DATABASE FUNCTIONS ---
         function fetchData() {
             const statusDot = document.getElementById('statusDot');
             const lastSyncLabel = document.getElementById('lastSyncLabel');
@@ -240,7 +243,6 @@
             });
         }
 
-        // --- STREAMING_CHUNK:Processing Upload and Cleanup... ---
         function parseInput(text) {
             const lines = text.trim().split(/\r?\n/);
             if (lines.length < 2) throw new Error("Format salah (Data tidak cukup).");
@@ -274,18 +276,34 @@
             try {
                 const data = parseInput(input);
                 const updatedData = { ...groupedInventory };
+                
                 data.forEach(item => {
+                    // FIX: Ensure SKU entry exists
                     if (!updatedData[item.sku]) {
-                        updatedData[item.sku] = { sku: item.sku, description: item.description, supplier: item.supplier, arrivals: [] };
+                        updatedData[item.sku] = { 
+                            sku: item.sku, 
+                            description: item.description, 
+                            supplier: item.supplier, 
+                            arrivals: [] 
+                        };
                     }
+                    
+                    // FIX: Double Check safety for arrivals array
+                    if (!updatedData[item.sku].arrivals) {
+                        updatedData[item.sku].arrivals = [];
+                    }
+
+                    // Add date if not exists
                     if (item.date && !updatedData[item.sku].arrivals.includes(item.date)) {
                         updatedData[item.sku].arrivals.push(item.date);
                         updatedData[item.sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
                     }
                 });
+
                 await db.ref('inventory').set(updatedData);
                 closeUploadModal();
                 document.getElementById('dataInput').value = "";
+                alert("Berhasil Sinkronisasi Cloud!");
             } catch (e) {
                 alert("Gagal: " + e.message);
             } finally {
@@ -321,7 +339,6 @@
             }
         }
 
-        // --- STREAMING_CHUNK:Rendering UI... ---
         function renderItems(items) {
             const container = document.getElementById('itemList');
             document.getElementById('totalCount').innerText = items.length;
@@ -395,12 +412,12 @@
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        // --- UI HANDLERS ---
         function openCleanupModal() { document.getElementById('cleanupModal').classList.remove('hidden'); }
         function closeCleanupModal() { document.getElementById('cleanupModal').classList.add('hidden'); }
         function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
         function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        
         function handleFileSelect(e) {
             const file = e.target.files[0];
             if (!file) return;
