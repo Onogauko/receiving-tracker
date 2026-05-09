@@ -241,7 +241,10 @@
             container.innerHTML = '';
             items.forEach(item => {
                 const count = item.arrivals.length;
-                const lastDate = count > 0 ? formatDate(item.arrivals[count-1]) : 'Belum Ada';
+                // Mengambil tanggal terbaru dengan mengurutkan arrivals secara descending
+                const sortedDates = [...item.arrivals].sort((a, b) => new Date(b) - new Date(a));
+                const lastDate = count > 0 ? formatDate(sortedDates[0]) : 'Belum Ada';
+                
                 const card = document.createElement('div');
                 card.className = `p-6 rounded-[2.2rem] mb-5 border transition-all cursor-pointer active:scale-[0.96] ${count > 0 ? 'bg-white border-fuchsia-100 shadow-sm' : 'bg-fuchsia-50/20 border-dashed border-fuchsia-100'}`;
                 card.onclick = () => openModal(item.sku);
@@ -257,7 +260,7 @@
                         </div>
                     </div>
                     <div class="mt-5 pt-4 border-t border-fuchsia-50 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-fuchsia-300 uppercase tracking-[0.15em]">Terakhir</span>
+                        <span class="text-[9px] font-black text-fuchsia-300 uppercase tracking-[0.1em]">Kedatangan terakhir</span>
                         <span class="text-xs font-bold text-fuchsia-800">${lastDate}</span>
                     </div>
                 `;
