@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 
@@ -40,6 +41,9 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
+        
+        /* Ensure the modal is always on top */
+        #uploadModal { z-index: 1000; }
     </style>
 </head>
 <body class="antialiased text-slate-900">
@@ -56,9 +60,9 @@
                         <span id="lastSyncLabel" class="text-[8px] text-fuchsia-400 uppercase font-black tracking-tighter">Connecting...</span>
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
-                    <!-- Admin Button to trigger Upload Modal -->
-                    <button onclick="toggleUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
+                    <!-- Database Button (Clickable Fixed) -->
+                    <button onclick="openUploadModal()" class="p-2.5 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Upload Database">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
                     </button>
                     <div id="dbDateContainer" class="hidden text-right mt-2">
                         <p class="text-[7px] text-slate-400 font-bold leading-none uppercase tracking-tighter">Data Sampai:</p>
@@ -104,7 +108,7 @@
         </div>
 
         <!-- Modal Riwayat Detail -->
-        <div id="modal" class="fixed inset-0 bg-fuchsia-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div id="modal" class="fixed inset-0 bg-fuchsia-900/60 backdrop-blur-sm z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
                 <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden shrink-0"></div>
                 <div class="mb-6 shrink-0">
@@ -121,167 +125,204 @@
             </div>
         </div>
 
-        <!-- Modal Upload Database (Hidden by default) -->
-        <div id="uploadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-            <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl flex flex-col overflow-hidden">
-                <div class="mb-6">
+        <!-- Modal Upload CSV/Excel -->
+        <div id="uploadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+                <div class="mb-4">
                     <h2 class="text-2xl font-bold text-slate-900">Upload Database</h2>
-                    <p class="text-xs text-slate-500 mt-1">Tempel data dari JSON atau Excel yang dikonversi.</p>
+                    <p class="text-xs text-slate-500 mt-1">Pilih file CSV atau tempel data dari Excel.</p>
+                </div>
+
+                <div id="dropZone" class="mb-4 border-2 border-dashed border-fuchsia-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-fuchsia-50/30 hover:bg-fuchsia-50 transition-all cursor-pointer group" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" accept=".csv, .txt" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="p-3 bg-white rounded-full shadow-sm text-fuchsia-500 mb-2 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    </div>
+                    <p class="text-[10px] font-bold text-fuchsia-600 uppercase tracking-widest">Klik untuk Pilih File .CSV</p>
+                    <p id="fileNameDisplay" class="text-[9px] text-slate-400 mt-1">Atau drag & drop file di sini</p>
                 </div>
                 
-                <textarea id="jsonInput" placeholder='Tempel data di sini...' 
-                    class="flex-1 w-full h-64 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-xs focus:bg-white focus:border-fuchsia-500 outline-none resize-none"></textarea>
+                <div class="relative flex items-center mb-4">
+                    <div class="flex-grow border-t border-slate-100"></div>
+                    <span class="mx-3 text-[9px] font-black text-slate-300 uppercase">Atau Tempel Manual</span>
+                    <div class="flex-grow border-t border-slate-100"></div>
+                </div>
+
+                <textarea id="dataInput" placeholder="sku	item description	anggal diterima	nama supplier..." 
+                    class="flex-1 w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-[11px] focus:bg-white focus:border-fuchsia-500 outline-none resize-none placeholder:text-slate-300"></textarea>
                 
                 <div class="mt-6 flex gap-3">
-                    <button onclick="toggleUploadModal()" class="flex-1 py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-all">Batal</button>
-                    <button onclick="processUpload()" class="flex-[2] py-4 font-bold text-white bg-fuchsia-600 rounded-2xl shadow-lg shadow-fuchsia-100 hover:bg-fuchsia-700 transition-all">Sync ke Cloud</button>
-                </div>
-                
-                <div class="mt-4 p-4 bg-fuchsia-50 rounded-xl border border-fuchsia-100">
-                    <p class="text-[10px] text-fuchsia-800 font-bold leading-relaxed italic">
-                        Petunjuk: Jika mengupload dari Excel, pastikan header bernama: "sku", "item description", "anggal diterima", "nama supplier".
-                    </p>
+                    <button onclick="closeUploadModal()" class="flex-1 py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-all">Batal</button>
+                    <button id="syncBtn" onclick="processDataUpload()" class="flex-[2] py-4 font-bold text-white bg-fuchsia-600 rounded-2xl shadow-lg shadow-fuchsia-100 hover:bg-fuchsia-700 transition-all">Mulai Sync Data</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- FIREBASE CONFIGURATION ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyAB1YK8Jzzhot_6KTgnBtCODPq5BVFrH_c",
-            authDomain: "magenta-aeon.firebaseapp.com",
-            projectId: "magenta-aeon",
-            storageBucket: "magenta-aeon.firebasestorage.app",
-            messagingSenderId: "508296835246",
-            appId: "1:508296835246:web:7164e0d1e81200de6ffd3f",
-            databaseURL: "https://magenta-aeon-default-rtdb.asia-southeast1.firebasedatabase.app"
-        };
+        /* ... existing firebase code ... */
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const STORAGE_KEY = "receiving_tracker_data_v3"; // Version bump for Firebase
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        let groupedInventory = {};
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            fileNameDisplay.innerText = "Membaca: " + file.name;
+            fileNameDisplay.classList.add('text-fuchsia-600', 'font-bold');
 
-        // Helper: Formatting Dates
-        function formatDate(dateStr, long = false) {
-            if (!dateStr) return "-";
-            try {
-                const date = new Date(dateStr);
-                if (isNaN(date.getTime())) return dateStr;
-                const options = long ? 
-                    { day: '2-digit', month: 'long', year: 'numeric' } : 
-                    { day: '2-digit', month: 'short', year: 'numeric' };
-                return new Intl.DateTimeFormat('id-ID', options).format(date);
-            } catch (e) { return dateStr; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                document.getElementById('dataInput').value = text;
+                showNotification("File berhasil dimuat! Klik 'Mulai Sync' untuk memproses.");
+            };
+            reader.readAsText(file);
         }
 
-        // --- CORE DATABASE FUNCTIONS ---
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
 
-        async function fetchData() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const statusDot = document.getElementById('statusDot');
-            const lastSyncLabel = document.getElementById('lastSyncLabel');
-            const refreshText = document.getElementById('refreshText');
-
-            refreshBtn.disabled = true;
-            btnSpinner.classList.remove('hidden');
-            refreshText.innerText = "Syncing...";
-            
-            try {
-                // Attach listener for real-time updates
-                db.ref('inventory').on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        groupedInventory = data;
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(groupedInventory));
-                        
-                        statusDot.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
-                        lastSyncLabel.innerText = "Cloud Active";
-                        updateDatabaseDateLabel();
-                        renderItems(Object.values(groupedInventory));
-                    } else {
-                        groupedInventory = {};
-                        renderItems([]);
-                        lastSyncLabel.innerText = "Cloud Empty";
-                    }
-                    
-                    refreshBtn.disabled = false;
-                    btnSpinner.classList.add('hidden');
-                    refreshText.innerText = "Update Cloud";
-                }, (error) => {
-                    throw error;
-                });
-            } catch (e) {
-                console.error(e);
-                statusDot.className = "h-2 w-2 rounded-full bg-red-500 animate-pulse";
-                lastSyncLabel.innerText = "Auth Error";
-                refreshBtn.disabled = false;
-                btnSpinner.classList.add('hidden');
-            }
-        }
-
-        async function processUpload() {
-            const input = document.getElementById('jsonInput').value.trim();
-            if (!input) return;
-
-            try {
-                let rawData = JSON.parse(input);
-                if (!Array.isArray(rawData)) {
-                    // Try to handle single object upload if accidentally pasted
-                    rawData = [rawData];
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length) {
+                    document.getElementById('fileInput').files = files;
+                    handleFileSelect({ target: { files: files } });
                 }
+            });
+        }
+
+        /* ... existing parseInput and processDataUpload code ... */
+
+        async function processDataUpload() {
+            const input = document.getElementById('dataInput').value;
+            const syncBtn = document.getElementById('syncBtn');
+            if (!input.trim()) return showNotification("Data kosong!", "error");
+
+            syncBtn.disabled = true;
+            syncBtn.innerText = "Memproses...";
+
+            try {
+                const rawData = parseInput(input);
+                if (rawData.length === 0) throw new Error("Tidak ada data valid");
 
                 const newGrouped = {};
-                
-                // Helper to normalize keys from Excel formats
-                const getKey = (item, variations) => {
-                    for (let v of variations) {
-                        const found = Object.keys(item).find(k => k.toLowerCase().trim() === v.toLowerCase());
-                        if (found) return item[found];
-                    }
-                    return null;
-                };
-
                 rawData.forEach(item => {
-                    const sku = String(getKey(item, ['sku', 'kode']) || 'N/A');
-                    const desc = String(getKey(item, ['item description', 'nama barang', 'deskripsi']) || 'Tanpa Deskripsi');
-                    const supp = String(getKey(item, ['nama supplier', 'supplier', 'vendor']) || '-');
-                    const date = getKey(item, ['anggal diterima', 'tanggal diterima', 'tanggal', 'date']);
-
+                    const sku = String(item.sku || 'N/A').trim();
                     if (!newGrouped[sku]) {
                         newGrouped[sku] = {
                             sku: sku,
-                            description: desc,
-                            supplier: supp,
+                            description: String(item.description || 'Tanpa Deskripsi'),
+                            supplier: String(item.supplier || '-'),
                             arrivals: []
                         };
                     }
-                    if (date) newGrouped[sku].arrivals.push(date);
+                    if (item.date) newGrouped[sku].arrivals.push(item.date);
                 });
 
-                // Check if current database already has some data to merge (Optional: here we overwrite for bulk sync)
                 await db.ref('inventory').set(newGrouped);
                 
-                toggleUploadModal();
-                document.getElementById('jsonInput').value = "";
-                // Modal notification instead of alert
-                showNotification("Database Berhasil di-Sync!");
+                closeUploadModal();
+                document.getElementById('dataInput').value = "";
+                document.getElementById('fileNameDisplay').innerText = "Atau drag & drop file di sini";
+                document.getElementById('fileInput').value = "";
+                showNotification("Berhasil Sinkronisasi " + Object.keys(newGrouped).length + " SKU!");
             } catch (e) {
                 console.error(e);
-                showNotification("Format Salah! Gunakan JSON yang valid.", "error");
+                showNotification("Gagal! Cek format file/header.", "error");
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.innerText = "Mulai Sync Data";
+            }
+        }
+
+        function parseInput(rawText) {
+            // Detect if JSON or CSV
+            rawText = rawText.trim();
+            if (rawText.startsWith('[') || rawText.startsWith('{')) {
+                return JSON.parse(rawText);
+            }
+
+            // CSV / Excel TSV Parsing
+            const lines = rawText.split(/\r?\n/);
+            if (lines.length < 2) return [];
+
+            // Detect delimiter (Tab or Comma)
+            const firstLine = lines[0];
+            const delimiter = firstLine.includes('\t') ? '\t' : (firstLine.includes(';') ? ';' : ',');
+            
+            const headers = lines[0].split(delimiter).map(h => h.toLowerCase().trim());
+            
+            // Find Index Mapping
+            const map = {
+                sku: headers.findIndex(h => h.includes('sku') || h.includes('kode')),
+                desc: headers.findIndex(h => h.includes('description') || h.includes('nama barang') || h.includes('deskripsi')),
+                date: headers.findIndex(h => h.includes('diterima') || h.includes('tanggal') || h.includes('date')),
+                supp: headers.findIndex(h => h.includes('supplier') || h.includes('nama supplier') || h.includes('vendor'))
+            };
+
+            const results = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
+                
+                results.push({
+                    sku: map.sku !== -1 ? cols[map.sku] : 'N/A',
+                    description: map.desc !== -1 ? cols[map.desc] : 'Tanpa Nama',
+                    date: map.date !== -1 ? cols[map.date] : '',
+                    supplier: map.supp !== -1 ? cols[map.supp] : '-'
+                });
+            }
+            return results;
+        }
+
+        async function processDataUpload() {
+            const input = document.getElementById('dataInput').value;
+            if (!input.trim()) return;
+
+            try {
+                const rawData = parseInput(input);
+                const newGrouped = {};
+
+                rawData.forEach(item => {
+                    const sku = String(item.sku || 'N/A');
+                    if (!newGrouped[sku]) {
+                        newGrouped[sku] = {
+                            sku: sku,
+                            description: String(item.description || 'Tanpa Deskripsi'),
+                            supplier: String(item.supplier || '-'),
+                            arrivals: []
+                        };
+                    }
+                    if (item.date) newGrouped[sku].arrivals.push(item.date);
+                });
+
+                // Overwrite the Firebase inventory node
+                await db.ref('inventory').set(newGrouped);
+                
+                closeUploadModal();
+                document.getElementById('dataInput').value = "";
+                showNotification("Berhasil Sinkronisasi " + Object.keys(newGrouped).length + " SKU!");
+            } catch (e) {
+                console.error(e);
+                showNotification("Format Salah! Pastikan ada Header.", "error");
             }
         }
 
         function renderItems(items) {
             const container = document.getElementById('itemList');
-            document.getElementById('totalCount').innerText = items.length;
+            const totalCount = document.getElementById('totalCount');
+            if(totalCount) totalCount.innerText = items.length;
             
+            if (!container) return;
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold text-fuchsia-300 italic">Data tidak ditemukan</div>`;
+                container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold text-fuchsia-300 italic">Database Kosong</div>`;
                 return;
             }
             
@@ -292,7 +333,7 @@
                 const lastDate = count > 0 ? formatDate(sortedDates[0]) : 'Belum Ada';
                 
                 const card = document.createElement('div');
-                card.className = `p-6 rounded-[2.2rem] mb-5 border transition-all cursor-pointer active:scale-[0.96] ${count > 0 ? 'bg-white border-fuchsia-100 shadow-sm' : 'bg-fuchsia-50/20 border-dashed border-fuchsia-100'}`;
+                card.className = `p-6 rounded-[2.2rem] mb-5 border transition-all cursor-pointer active:scale-[0.96] bg-white border-fuchsia-100 shadow-sm`;
                 card.onclick = () => openModal(item.sku);
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-4">
@@ -315,8 +356,8 @@
         }
 
         function updateDatabaseDateLabel() {
-            const dbDateContainer = document.getElementById('dbDateContainer');
             const dbDateLabel = document.getElementById('dbDateLabel');
+            const dbDateContainer = document.getElementById('dbDateContainer');
             let latestDate = null;
 
             Object.values(groupedInventory).forEach(item => {
@@ -330,7 +371,7 @@
                 }
             });
 
-            if (latestDate) {
+            if (latestDate && dbDateLabel && dbDateContainer) {
                 dbDateLabel.innerText = formatDate(latestDate, true);
                 dbDateContainer.classList.remove('hidden');
             }
@@ -351,7 +392,7 @@
             const sortedArrivals = [...arrivals].sort((a, b) => new Date(b) - new Date(a));
             
             if (sortedArrivals.length === 0) {
-                historyList.innerHTML = `<p class="text-fuchsia-300 text-sm italic py-4">Belum ada riwayat kedatangan barang.</p>`;
+                historyList.innerHTML = `<p class="text-fuchsia-300 text-sm italic py-4">Belum ada riwayat.</p>`;
             } else {
                 sortedArrivals.forEach((date, i) => {
                     const entry = document.createElement('div');
@@ -359,7 +400,7 @@
                     entry.innerHTML = `
                         <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
                         <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
-                            <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Diterima Log #${sortedArrivals.length - i}</p>
+                            <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${sortedArrivals.length - i}</p>
                             <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
                         </div>
                     `;
@@ -370,17 +411,17 @@
         }
 
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        function toggleUploadModal() { document.getElementById('uploadModal').classList.toggle('hidden'); }
+        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
 
         function showNotification(msg, type = "success") {
             const toast = document.createElement('div');
-            toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl font-bold text-white text-sm animate-slide-up ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+            toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl font-bold text-white text-sm animate-slide-up ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
             toast.innerText = msg;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // Search Logic
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
             const filtered = Object.values(groupedInventory).filter(i => 
@@ -391,12 +432,12 @@
             renderItems(filtered);
         });
 
-        // Close on backdrop click
         window.onclick = (e) => { 
             if(e.target.id === 'modal') closeModal();
-            if(e.target.id === 'uploadModal') toggleUploadModal();
+            if(e.target.id === 'uploadModal') closeUploadModal();
         };
 
-        // Initialize on load
-        window.onload = () => {
-            //
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
