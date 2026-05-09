@@ -35,8 +35,8 @@
             border: 3px solid rgba(217, 70, 239, 0.1);
             border-left-color: #d946ef;
             border-radius: 50%;
-            width: 18px;
-            height: 18px;
+            width: 14px;
+            height: 14px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -46,34 +46,37 @@
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-xl relative">
         <header class="bg-white/95 backdrop-blur-md border-b border-fuchsia-100 p-5 sticky top-0 z-30 shadow-sm">
-            <div class="flex justify-between items-start mb-5">
+            <div class="flex justify-between items-start mb-4">
                 <div>
                     <h1 class="text-2xl font-extrabold tracking-tight text-fuchsia-900">Receiving Log</h1>
                     <p class="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-0.5">Ringkasan Riwayat Kedatangan Barang</p>
+                    
+                    <div id="dbDateContainer" class="hidden mt-2 flex items-center gap-1.5 bg-fuchsia-50/50 w-fit px-2 py-0.5 rounded-md border border-fuchsia-100/50">
+                        <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">Data Update:</span>
+                        <span id="dbDateLabel" class="text-[9px] text-fuchsia-600 font-black tracking-tighter uppercase"></span>
+                    </div>
                 </div>
                 <div class="flex flex-col items-end pt-1">
-                    <div class="flex items-center gap-2 mb-2">
+                    <div class="flex items-center gap-2 mb-3">
                         <span id="lastSyncLabel" class="text-[8px] text-fuchsia-400 uppercase font-black tracking-tighter">Connecting...</span>
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
                     <div class="flex gap-2">
-                        <!-- Button Hapus Per Bulan -->
-                        <button onclick="openCleanupModal()" class="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Hapus Data per Bulan">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <button onclick="openCleanupModal()" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm active:scale-90">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
-                        <!-- Button Upload -->
-                        <button onclick="openUploadModal()" class="p-2.5 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all cursor-pointer shadow-sm active:scale-90" title="Upload Database">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
+                        <button onclick="openUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
                         </button>
                     </div>
                 </div>
             </div>
             
-            <div class="relative group">
+            <div class="relative">
                 <input type="text" id="searchInput" placeholder="Cari SKU, nama barang, atau supplier..." 
-                    class="w-full bg-fuchsia-50 border-2 border-fuchsia-100/50 rounded-2xl py-3.5 pl-12 pr-10 text-sm focus:bg-white focus:border-fuchsia-500 transition-all outline-none shadow-inner">
-                <div class="absolute left-4 top-3.5 text-fuchsia-300">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    class="w-full bg-fuchsia-50 border-2 border-fuchsia-100/50 rounded-2xl py-3 pl-11 pr-4 text-sm focus:bg-white focus:border-fuchsia-500 transition-all outline-none shadow-inner">
+                <div class="absolute left-4 top-3 text-fuchsia-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
         </header>
@@ -85,71 +88,67 @@
             </div>
         </main>
 
-        <div class="sticky bottom-0 z-20 bg-white border-t border-fuchsia-100">
-            <nav class="p-5 flex justify-between items-center safe-bottom">
+        <div class="sticky bottom-0 z-20 bg-white border-t border-fuchsia-100 shadow-[0_-10px_25px_rgba(0,0,0,0.03)]">
+            <nav class="p-4 flex justify-between items-center safe-bottom">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest">SKU Terdaftar</span>
-                    <span id="totalCount" class="text-xl font-black text-fuchsia-900">0</span>
+                    <span class="text-[9px] font-bold text-fuchsia-400 uppercase tracking-widest">SKU Terdaftar</span>
+                    <span id="totalCount" class="text-xl font-black text-fuchsia-900 leading-none">0</span>
                 </div>
-                <div id="dbDateContainer" class="hidden text-right">
-                    <p class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">Update:</p>
-                    <p id="dbDateLabel" class="text-[9px] text-fuchsia-500 font-black tracking-tighter"></p>
-                </div>
+                
+                <button id="refreshBtn" onclick="fetchData()" class="bg-fuchsia-700 text-white px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 active:scale-95 transition-all shadow-lg shadow-fuchsia-200">
+                    <div id="btnSpinner" class="spinner hidden border-white/30 border-l-white"></div>
+                    <span id="refreshText" class="text-xs">Update Data</span>
+                </button>
             </nav>
+            
+            <div class="pb-3 px-5 text-center border-t border-fuchsia-50 pt-2">
+                <p class="text-[8px] font-medium text-fuchsia-300 tracking-wider">
+                    © 2026 Receiving Tracker — by Jenta Zebua MCT
+                </p>
+            </div>
         </div>
 
-        <!-- Modal Cleanup (Hapus Per Bulan) -->
+        <!-- Modal Cleanup -->
         <div id="cleanupModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[110]">
-            <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl flex flex-col animate-slide-up">
+            <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-slide-up">
                 <div class="mb-6 text-center">
-                    <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-slate-900">Hapus Riwayat</h2>
-                    <p class="text-xs text-slate-500 mt-1">Pilih periode kedatangan yang ingin dihapus.</p>
+                    <h2 class="text-xl font-bold text-slate-900">Hapus Riwayat</h2>
+                    <p class="text-[10px] text-slate-500 mt-1">Pilih periode untuk dibersihkan.</p>
                 </div>
-
-                <div class="space-y-4">
-                    <select id="cleanupMonth" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
+                <div class="space-y-3">
+                    <select id="cleanupMonth" class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-3 outline-none focus:border-red-500 font-bold text-slate-700 text-sm">
                         <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
                         <option value="04">April</option><option value="05" selected>Mei</option><option value="06">Juni</option>
                         <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
                         <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
                     </select>
-                    <select id="cleanupYear" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-red-500 font-bold text-slate-700">
+                    <select id="cleanupYear" class="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-3 outline-none focus:border-red-500 font-bold text-slate-700 text-sm">
                         <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
                     </select>
                 </div>
-
-                <div class="mt-8 flex flex-col gap-3">
-                    <button id="cleanupBtn" onclick="processCleanup()" class="w-full py-4 font-bold text-white bg-red-500 rounded-2xl active:scale-95 transition-all">Hapus Permanen</button>
-                    <button onclick="closeCleanupModal()" class="w-full py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl active:scale-95 transition-all">Batal</button>
+                <div class="mt-6 flex flex-col gap-2">
+                    <button id="cleanupBtn" onclick="processCleanup()" class="w-full py-3 font-bold text-white bg-red-500 rounded-xl active:scale-95 transition-all text-sm">Hapus Permanen</button>
+                    <button onclick="closeCleanupModal()" class="w-full py-3 font-bold text-slate-400 bg-slate-100 rounded-xl text-sm">Batal</button>
                 </div>
             </div>
         </div>
 
         <!-- Modal Upload -->
         <div id="uploadModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[101]">
-            <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+            <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-slide-up">
                 <div class="mb-4 text-center">
-                    <h2 class="text-2xl font-bold text-slate-900">Upload Database</h2>
-                    <p class="text-xs text-slate-500">Gunakan file CSV atau tempel dari Excel.</p>
+                    <h2 class="text-xl font-bold text-slate-900">Upload Database</h2>
+                    <p class="text-[10px] text-slate-500">Gunakan file CSV atau tempel baris Excel.</p>
                 </div>
-
                 <div id="dropZone" class="mb-4 border-2 border-dashed border-fuchsia-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-fuchsia-50/30 cursor-pointer" onclick="document.getElementById('fileInput').click()">
                     <input type="file" id="fileInput" accept=".csv, .txt" class="hidden" onchange="handleFileSelect(event)">
-                    <div class="p-3 bg-white rounded-full text-fuchsia-500 mb-2 shadow-sm">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    </div>
-                    <p class="text-[10px] font-bold text-fuchsia-600 uppercase">Klik untuk Pilih File .CSV</p>
-                    <p id="fileNameDisplay" class="text-[9px] text-slate-400 mt-1">Atau tempel teks di bawah</p>
+                    <p class="text-[9px] font-bold text-fuchsia-600 uppercase tracking-widest">Klik Pilih File .CSV</p>
+                    <p id="fileNameDisplay" class="text-[8px] text-slate-400 mt-1">Atau tempel teks di bawah</p>
                 </div>
-
-                <textarea id="dataInput" placeholder="Tempel baris Excel di sini..." class="w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-[11px] outline-none resize-none"></textarea>
-                
-                <div class="mt-6 flex gap-3">
-                    <button onclick="closeUploadModal()" class="flex-1 py-4 font-bold text-slate-400 bg-slate-100 rounded-2xl">Batal</button>
-                    <button id="syncBtn" onclick="processDataUpload()" class="flex-[2] py-4 font-bold text-white bg-fuchsia-600 rounded-2xl shadow-lg">Sinkronkan ke Cloud</button>
+                <textarea id="dataInput" placeholder="Tempel baris Excel di sini..." class="w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-xl text-[10px] outline-none resize-none"></textarea>
+                <div class="mt-6 flex gap-2">
+                    <button onclick="closeUploadModal()" class="flex-1 py-3 font-bold text-slate-400 bg-slate-100 rounded-xl text-sm">Batal</button>
+                    <button id="syncBtn" onclick="processDataUpload()" class="flex-[2] py-3 font-bold text-white bg-fuchsia-600 rounded-xl shadow-lg text-sm">Sinkronkan ke Cloud</button>
                 </div>
             </div>
         </div>
@@ -157,16 +156,16 @@
         <!-- Modal Detail -->
         <div id="modal" class="fixed inset-0 bg-fuchsia-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
-                <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden"></div>
-                <div class="mb-6">
-                    <p id="modalSku" class="text-[10px] font-black text-fuchsia-600 uppercase tracking-widest mb-2"></p>
-                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
-                    <p id="modalSupplier" class="text-[10px] text-slate-400 mt-1 uppercase font-bold"></p>
+                <div class="w-12 h-1 bg-fuchsia-100 rounded-full mx-auto mb-6 sm:hidden"></div>
+                <div class="mb-5">
+                    <p id="modalSku" class="text-[9px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-1"></p>
+                    <h2 id="modalTitle" class="text-xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
+                    <p id="modalSupplier" class="text-[9px] text-slate-400 mt-0.5 uppercase font-bold"></p>
                 </div>
                 <div class="flex-1 overflow-y-auto mb-6 pr-2">
                     <div id="historyList" class="relative history-line pl-8 space-y-6"></div>
                 </div>
-                <button onclick="closeModal()" class="w-full py-4 font-bold text-white bg-fuchsia-800 rounded-2xl shadow-xl">Tutup</button>
+                <button onclick="closeModal()" class="w-full py-4 font-bold text-white bg-fuchsia-800 rounded-2xl">Tutup</button>
             </div>
         </div>
     </div>
@@ -187,8 +186,7 @@
         const STORAGE_KEY = "receiving_tracker_data_v2";
         let groupedInventory = {};
 
-        // --- CORE FUNCTIONS ---
-
+        // --- UTILITIES ---
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
             const parts = dateStr.trim().split(/[\/\-]/);
@@ -197,7 +195,7 @@
                 const month = parts[1].padStart(2, '0');
                 let year = parts[2];
                 if (year.length === 2) year = "20" + year;
-                return `${year}-${month}-${day}`; // ISO Format
+                return `${year}-${month}-${day}`; 
             }
             return null;
         }
@@ -213,20 +211,16 @@
             } catch (e) { return dateStr; }
         }
 
-        // --- UI ACTIONS ---
-
-        function openCleanupModal() { document.getElementById('cleanupModal').classList.remove('hidden'); }
-        function closeCleanupModal() { document.getElementById('cleanupModal').classList.add('hidden'); }
-        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
-        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-
-        // --- DATABASE LOGIC ---
-
+        // --- CORE DATABASE FUNCTIONS ---
         function fetchData() {
             const statusDot = document.getElementById('statusDot');
             const lastSyncLabel = document.getElementById('lastSyncLabel');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const refreshText = document.getElementById('refreshText');
             
+            btnSpinner.classList.remove('hidden');
+            refreshText.innerText = "Syncing...";
+
             db.ref('inventory').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -241,24 +235,22 @@
                     renderItems([]);
                     lastSyncLabel.innerText = "DB Kosong";
                 }
+                btnSpinner.classList.add('hidden');
+                refreshText.innerText = "Update Data";
             });
         }
 
-        // --- STREAMING_CHUNK:Parsing inputs and rendering list... ---
+        // --- STREAMING_CHUNK:Processing Upload and Cleanup... ---
         function parseInput(text) {
             const lines = text.trim().split(/\r?\n/);
             if (lines.length < 2) throw new Error("Format salah (Data tidak cukup).");
-
             const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
             const headers = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/[^a-z0-9]/g, ''));
-
             const skuIdx = headers.findIndex(h => h.includes('sku'));
             const descIdx = headers.findIndex(h => h.includes('item') || h.includes('desc'));
-            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
+            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('date'));
             const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
-
             if (skuIdx === -1) throw new Error("Header 'sku' tidak ditemukan.");
-
             const result = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(delimiter);
@@ -277,14 +269,11 @@
             const input = document.getElementById('dataInput').value;
             const syncBtn = document.getElementById('syncBtn');
             if (!input) return alert("Pilih file atau tempel teks dulu.");
-
             syncBtn.disabled = true;
             syncBtn.innerText = "Memproses...";
-
             try {
                 const data = parseInput(input);
                 const updatedData = { ...groupedInventory };
-
                 data.forEach(item => {
                     if (!updatedData[item.sku]) {
                         updatedData[item.sku] = { sku: item.sku, description: item.description, supplier: item.supplier, arrivals: [] };
@@ -294,9 +283,7 @@
                         updatedData[item.sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
                     }
                 });
-
                 await db.ref('inventory').set(updatedData);
-                alert("Data berhasil disinkronkan ke Cloud!");
                 closeUploadModal();
                 document.getElementById('dataInput').value = "";
             } catch (e) {
@@ -311,12 +298,9 @@
             const month = document.getElementById('cleanupMonth').value;
             const year = document.getElementById('cleanupYear').value;
             const cleanupBtn = document.getElementById('cleanupBtn');
-            
-            if (!confirm(`Hapus SEMUA riwayat kedatangan bulan ${month}/${year}?`)) return;
-
+            if (!confirm(`Hapus SEMUA riwayat bulan ${month}/${year}?`)) return;
             cleanupBtn.disabled = true;
             cleanupBtn.innerText = "Menghapus...";
-
             try {
                 const updatedData = { ...groupedInventory };
                 Object.keys(updatedData).forEach(sku => {
@@ -327,19 +311,17 @@
                         });
                     }
                 });
-
                 await db.ref('inventory').set(updatedData);
-                alert("Data periode tersebut telah dibersihkan.");
                 closeCleanupModal();
             } catch (e) {
-                alert("Gagal hapus: " + e.message);
+                alert("Gagal: " + e.message);
             } finally {
                 cleanupBtn.disabled = false;
                 cleanupBtn.innerText = "Hapus Permanen";
             }
         }
 
-        // --- STREAMING_CHUNK:Rendering and utility... ---
+        // --- STREAMING_CHUNK:Rendering UI... ---
         function renderItems(items) {
             const container = document.getElementById('itemList');
             document.getElementById('totalCount').innerText = items.length;
@@ -352,21 +334,21 @@
                 const count = item.arrivals ? item.arrivals.length : 0;
                 const lastDate = count > 0 ? formatDate(item.arrivals[0]) : 'Belum Ada';
                 const card = document.createElement('div');
-                card.className = "p-6 rounded-[2.2rem] mb-5 border bg-white border-fuchsia-100 shadow-sm cursor-pointer active:scale-95 transition-all";
+                card.className = "p-5 rounded-[2.2rem] mb-4 border bg-white border-fuchsia-100 shadow-sm cursor-pointer active:scale-95 transition-all";
                 card.onclick = () => openModal(item.sku);
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-4">
                         <div class="flex-1">
-                            <span class="text-[9px] font-black text-fuchsia-600 uppercase tracking-widest mb-1 block">${item.sku}</span>
-                            <h3 class="font-bold text-slate-900 leading-tight text-md mb-2 line-clamp-2">${item.description}</h3>
+                            <span class="text-[8px] font-black text-fuchsia-600 uppercase tracking-widest mb-1 block">${item.sku}</span>
+                            <h3 class="font-bold text-slate-900 leading-tight text-sm mb-2 line-clamp-2">${item.description}</h3>
                             <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
                         </div>
                         <div class="shrink-0">
-                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-200'} px-3 py-1 rounded-full text-[9px] font-black">${count}x</div>
+                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-200'} px-2.5 py-1 rounded-full text-[8px] font-black">${count}x</div>
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-fuchsia-50 flex items-center justify-between">
-                        <span class="text-[9px] font-black text-fuchsia-300 uppercase">Terakhir masuk</span>
+                    <div class="mt-4 pt-3 border-t border-fuchsia-50 flex items-center justify-between">
+                        <span class="text-[8px] font-black text-fuchsia-300 uppercase">Terakhir masuk</span>
                         <span class="text-xs font-bold text-fuchsia-800">${lastDate}</span>
                     </div>
                 `;
@@ -401,9 +383,9 @@
                     const entry = document.createElement('div');
                     entry.className = "relative";
                     entry.innerHTML = `
-                        <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
+                        <div class="absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
                         <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
-                            <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${item.arrivals.length - i}</p>
+                            <p class="text-[8px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${item.arrivals.length - i}</p>
                             <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
                         </div>
                     `;
@@ -413,8 +395,14 @@
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
+        // --- UI HANDLERS ---
+        function openCleanupModal() { document.getElementById('cleanupModal').classList.remove('hidden'); }
+        function closeCleanupModal() { document.getElementById('cleanupModal').classList.add('hidden'); }
+        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
             if (!file) return;
             document.getElementById('fileNameDisplay').innerText = "File: " + file.name;
             const reader = new FileReader();
