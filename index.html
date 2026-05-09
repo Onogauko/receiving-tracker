@@ -40,7 +40,6 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
     </style>
 </head>
 <body class="antialiased text-slate-900">
@@ -103,7 +102,7 @@
                 <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden shrink-0"></div>
                 <div class="mb-6 shrink-0">
                     <p id="modalSku" class="text-[10px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-2"></p>
-                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight text-lg">Detail Riwayat</h2>
+                    <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
                     <p id="modalSupplier" class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider"></p>
                 </div>
                 <div class="flex-1 overflow-y-auto mb-6 pr-2">
@@ -159,47 +158,68 @@
         const STORAGE_KEY = "receiving_tracker_data_v2";
         let groupedInventory = {};
 
+        // Penanganan Tanggal Format Indonesia DD/MM/YYYY
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
             const cleanStr = dateStr.trim();
             
-            // Handle DD/MM/YYYY or DD-MM-YYYY
+            // Mencoba memisahkan dengan / atau -
             const parts = cleanStr.split(/[\/\-]/);
             if (parts.length === 3) {
-                let day, month, year;
-                // Detect if it's YYYY-MM-DD (length of first part is 4) or DD-MM-YYYY
-                if (parts[0].length === 4) {
-                    year = parts[0]; month = parts[1]; day = parts[2];
-                } else {
-                    day = parts[0]; month = parts[1]; year = parts[2];
-                    // Handle 2-digit year
-                    if (year.length === 2) year = "20" + year;
-                }
-                // Return in ISO Format for reliable sorting YYYY-MM-DD
-                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                // Menghapus spasi dan memastikan format angka
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                let year = parts[2];
+                if (year.length === 2) year = "20" + year; // Handle 2 digit year
+
+                // Return format ISO YYYY-MM-DD untuk sorting yang benar
+                return `${year}-${month}-${day}`;
             }
 
-            // Fallback to native for other formats
+            // Fallback jika sudah format ISO
             const d = new Date(cleanStr);
-            return isNaN(d.getTime()) ? cleanStr : d.toISOString().split('T')[0];
+            return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
         }
 
         function formatDate(dateStr, long = false) {
             if (!dateStr) return "-";
             try {
-                // Ensure we parse our custom format
                 const parts = dateStr.split('-');
-                let date;
-                if (parts.length === 3) {
-                    date = new Date(parts[0], parts[1] - 1, parts[2]);
-                } else {
-                    date = new Date(dateStr);
-                }
-
+                const date = new Date(parts[0], parts[1] - 1, parts[2]);
                 if (isNaN(date.getTime())) return dateStr;
                 const options = long ? { day: '2-digit', month: 'long', year: 'numeric' } : { day: '2-digit', month: 'short', year: 'numeric' };
                 return new Intl.DateTimeFormat('id-ID', options).format(date);
             } catch (e) { return dateStr; }
+        }
+
+        // Fungsi Pemroses Input CSV / Excel
+        function parseInput(text) {
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) throw new Error("Data tidak cukup atau header tidak ditemukan.");
+
+            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+            const headers = lines[0].split(delimiter).map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
+
+            const skuIdx = headers.findIndex(h => h.includes('sku'));
+            const descIdx = headers.findIndex(h => h.includes('item') || h.includes('description'));
+            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
+            const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
+
+            if (skuIdx === -1) throw new Error("Kolom SKU tidak ditemukan! Pastikan ada header 'sku'.");
+
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(delimiter);
+                if (cols.length < 2) continue;
+
+                result.push({
+                    sku: cols[skuIdx]?.trim() || "",
+                    description: cols[descIdx]?.trim() || "Tanpa Deskripsi",
+                    date: cols[dateIdx]?.trim() || "",
+                    supplier: cols[suppIdx]?.trim() || "-"
+                });
+            }
+            return result;
         }
 
         async function processDataUpload() {
@@ -212,43 +232,60 @@
 
             try {
                 const rawData = parseInput(input);
-                if (rawData.length === 0) throw new Error("Tidak ada data baris yang valid");
-
                 const newGrouped = {};
+
                 rawData.forEach(item => {
-                    // Clean SKU: handle leading zeros from Excel
-                    const sku = String(item.sku).trim().padStart(7, '0');
+                    const sku = String(item.sku).padStart(7, '0');
                     if (!newGrouped[sku]) {
                         newGrouped[sku] = {
                             sku: sku,
-                            description: String(item.description),
-                            supplier: String(item.supplier),
+                            description: item.description,
+                            supplier: item.supplier,
                             arrivals: []
                         };
                     }
-                    if (item.date) {
-                        const standardizedDate = parseIndoDate(item.date);
-                        if (standardizedDate) newGrouped[sku].arrivals.push(standardizedDate);
+                    const standardizedDate = parseIndoDate(item.date);
+                    if (standardizedDate) {
+                        if (!newGrouped[sku].arrivals.includes(standardizedDate)) {
+                            newGrouped[sku].arrivals.push(standardizedDate);
+                        }
                     }
                 });
 
-                // Sort arrivals for each item before saving
+                // Urutkan tanggal arrivals terbaru di atas
                 Object.keys(newGrouped).forEach(sku => {
                     newGrouped[sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
                 });
 
                 await db.ref('inventory').set(newGrouped);
-                
                 closeUploadModal();
-                document.getElementById('dataInput').value = "";
                 showNotification("Berhasil Sinkronisasi " + Object.keys(newGrouped).length + " SKU!");
             } catch (e) {
-                console.error(e);
-                showNotification(e.message || "Gagal! Periksa format file.", "error");
+                showNotification(e.message, "error");
             } finally {
                 syncBtn.disabled = false;
                 syncBtn.innerText = "Mulai Sync Data";
             }
+        }
+
+        function fetchData() {
+            const statusDot = document.getElementById('statusDot');
+            const lastSyncLabel = document.getElementById('lastSyncLabel');
+            
+            db.ref('inventory').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    groupedInventory = data;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    renderItems(Object.values(data));
+                    updateDatabaseDateLabel();
+                    statusDot.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
+                    lastSyncLabel.innerText = "Cloud Terhubung";
+                } else {
+                    renderItems([]);
+                    lastSyncLabel.innerText = "Database Kosong";
+                }
+            });
         }
 
         function renderItems(items) {
@@ -263,11 +300,10 @@
             container.innerHTML = '';
             items.forEach(item => {
                 const count = item.arrivals ? item.arrivals.length : 0;
-                const sortedDates = count > 0 ? [...item.arrivals].sort((a, b) => new Date(b) - new Date(a)) : [];
-                const lastDate = count > 0 ? formatDate(sortedDates[0]) : 'Belum Ada';
+                const lastDate = count > 0 ? formatDate(item.arrivals[0]) : 'Belum Ada';
                 
                 const card = document.createElement('div');
-                card.className = `p-6 rounded-[2.2rem] mb-5 border transition-all cursor-pointer active:scale-[0.96] bg-white border-fuchsia-100 shadow-sm`;
+                card.className = "p-6 rounded-[2.2rem] mb-5 border bg-white border-fuchsia-100 shadow-sm transition-all cursor-pointer active:scale-[0.96]";
                 card.onclick = () => openModal(item.sku);
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-4">
@@ -277,7 +313,7 @@
                             <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
                         </div>
                         <div class="shrink-0">
-                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-white text-fuchsia-200 border border-fuchsia-100'} px-3 py-1 rounded-full text-[9px] font-black shadow-sm uppercase">${count}x Masuk</div>
+                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-300'} px-3 py-1 rounded-full text-[9px] font-black shadow-sm uppercase">${count}x Masuk</div>
                         </div>
                     </div>
                     <div class="mt-5 pt-4 border-t border-fuchsia-50 flex items-center justify-between">
@@ -292,15 +328,13 @@
         function updateDatabaseDateLabel() {
             let latestDate = null;
             Object.values(groupedInventory).forEach(item => {
-                if (item.arrivals) {
-                    item.arrivals.forEach(dateStr => {
-                        const d = new Date(dateStr);
-                        if (!isNaN(d.getTime())) if (!latestDate || d > latestDate) latestDate = d;
-                    });
+                if (item.arrivals && item.arrivals.length > 0) {
+                    const d = new Date(item.arrivals[0]);
+                    if (!latestDate || d > latestDate) latestDate = d;
                 }
             });
             if (latestDate) {
-                document.getElementById('dbDateLabel').innerText = formatDate(latestDate, true);
+                document.getElementById('dbDateLabel').innerText = formatDate(latestDate.toISOString().split('T')[0], true);
                 document.getElementById('dbDateContainer').classList.remove('hidden');
             }
         }
@@ -322,7 +356,8 @@
             document.getElementById('modalSupplier').innerText = "Supplier: " + item.supplier;
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
-            const sortedArrivals = [...(item.arrivals || [])].sort((a, b) => new Date(b) - new Date(a));
+            
+            const sortedArrivals = [...(item.arrivals || [])];
             sortedArrivals.forEach((date, i) => {
                 const entry = document.createElement('div');
                 entry.className = "relative";
@@ -341,6 +376,7 @@
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
         function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
+        
         function showNotification(msg, type = "success") {
             const toast = document.createElement('div');
             toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl font-bold text-white text-sm animate-slide-up ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
@@ -351,11 +387,15 @@
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
-            const filtered = Object.values(groupedInventory).filter(i => i.sku.toLowerCase().includes(val) || i.description.toLowerCase().includes(val) || i.supplier.toLowerCase().includes(val));
+            const filtered = Object.values(groupedInventory).filter(i => i.sku.includes(val) || i.description.toLowerCase().includes(val) || i.supplier.toLowerCase().includes(val));
             renderItems(filtered);
         });
 
-        window.onclick = (e) => { if(e.target.id === 'modal') closeModal(); if(e.target.id === 'uploadModal') closeUploadModal(); };
+        window.onclick = (e) => { 
+            if(e.target.id === 'modal') closeModal(); 
+            if(e.target.id === 'uploadModal') closeUploadModal(); 
+        };
+        
         window.onload = fetchData;
     </script>
 </body>
