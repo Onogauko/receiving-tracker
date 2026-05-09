@@ -26,13 +26,12 @@
             background: #fae8ff;
         }
 
-        /* Loading Spinner */
         .spinner {
             border: 3px solid rgba(217, 70, 239, 0.1);
             border-left-color: #d946ef;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -41,29 +40,34 @@
 <body class="antialiased text-slate-900">
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-xl relative">
-        <!-- Header -->
         <header class="bg-white/95 backdrop-blur-md border-b border-fuchsia-100 p-5 sticky top-0 z-30 shadow-sm">
             <div class="flex justify-between items-start mb-5">
                 <div>
                     <h1 class="text-2xl font-extrabold tracking-tight text-fuchsia-900">Receiving Log</h1>
                     <p class="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-0.5">Ringkasan Riwayat Kedatangan Barang</p>
                 </div>
-                <div id="connectionStatus" class="flex flex-col items-end">
-                    <div id="statusDot" class="h-2.5 w-2.5 rounded-full bg-slate-300"></div>
-                    <span id="lastSyncLabel" class="text-[8px] text-slate-400 mt-1 uppercase font-bold">Offline</span>
+                <div id="connectionStatus" class="flex flex-col items-end pt-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="lastSyncLabel" class="text-[8px] text-fuchsia-400 uppercase font-black tracking-tighter">Offline</span>
+                        <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
+                    </div>
+                    <!-- New Database Latest Date Label -->
+                    <div id="dbDateContainer" class="hidden text-right">
+                        <p class="text-[7px] text-slate-400 font-bold leading-none uppercase tracking-tighter">Data Sampai:</p>
+                        <p id="dbDateLabel" class="text-[9px] text-fuchsia-500 font-black leading-tight uppercase tracking-tighter mt-0.5"></p>
+                    </div>
                 </div>
             </div>
             
             <div class="relative group">
                 <input type="text" id="searchInput" placeholder="Cari SKU, nama barang, atau supplier..." 
-                    class="w-full bg-fuchsia-50 border-2 border-transparent rounded-2xl py-3.5 pl-12 pr-10 text-sm focus:bg-white focus:border-fuchsia-500 transition-all outline-none shadow-inner">
+                    class="w-full bg-fuchsia-50 border-2 border-fuchsia-100/50 rounded-2xl py-3.5 pl-12 pr-10 text-sm focus:bg-white focus:border-fuchsia-500 transition-all outline-none shadow-inner">
                 <div class="absolute left-4 top-3.5 text-fuchsia-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="flex-1 p-4" id="itemList">
             <div id="loading" class="space-y-4">
                 <div class="h-32 bg-fuchsia-50 border border-fuchsia-100 animate-pulse rounded-[2.2rem]"></div>
@@ -72,7 +76,6 @@
             </div>
         </main>
 
-        <!-- Footer / Nav -->
         <div class="sticky bottom-0 z-20 bg-white border-t border-fuchsia-100 shadow-[0_-10px_25px_rgba(0,0,0,0.03)]">
             <nav class="p-5 flex justify-between items-center safe-bottom">
                 <div class="flex flex-col">
@@ -85,32 +88,26 @@
                 </button>
             </nav>
             
-            <!-- Watermark -->
             <div class="pb-4 px-5 text-center">
-                <p class="text-[9px] font-medium text-fuchsia-300 tracking-wider">
+                <p class="text-[9px] font-medium text-fuchsia-300 tracking-wider italic">
                     © 2026 Receiving Tracker — by Jenta Zebua MCT
                 </p>
             </div>
         </div>
 
-        <!-- Modal History -->
         <div id="modal" class="fixed inset-0 bg-fuchsia-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-            <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-slide-up shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
                 <div class="w-12 h-1.5 bg-fuchsia-100 rounded-full mx-auto mb-8 sm:hidden shrink-0"></div>
-                
                 <div class="mb-6 shrink-0">
                     <p id="modalSku" class="text-[10px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-2"></p>
                     <h2 id="modalTitle" class="text-2xl font-bold text-slate-900 leading-tight">Detail Riwayat</h2>
-                    <p id="modalSupplier" class="text-xs text-slate-400 mt-1"></p>
+                    <p id="modalSupplier" class="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider"></p>
                 </div>
-                
                 <div class="flex-1 overflow-y-auto mb-6 pr-2">
-                    <label class="block text-[11px] font-bold text-fuchsia-300 uppercase mb-4 tracking-widest">Log Kedatangan</label>
                     <div id="historyList" class="relative history-line pl-8 space-y-6"></div>
                 </div>
-
                 <div class="flex gap-4 pt-4 border-t border-fuchsia-50 shrink-0">
-                    <button onclick="closeModal()" class="flex-1 py-4.5 font-bold text-white bg-fuchsia-800 rounded-2xl shadow-xl shadow-fuchsia-100 active:scale-[0.98] transition-all">Tutup</button>
+                    <button onclick="closeModal()" class="flex-1 py-4.5 font-bold text-white bg-fuchsia-800 rounded-2xl shadow-xl active:scale-[0.98] transition-all">Tutup Riwayat</button>
                 </div>
             </div>
         </div>
@@ -118,7 +115,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwQEsejr1HzpXCmKVcUyQdBscFaRPs6pYnmafShcBY42b9sgu9xSlfTEtUDfiK3xkog/exec"; 
-        const STORAGE_KEY = "receiving_tracker_data";
+        const STORAGE_KEY = "receiving_tracker_data_v2";
 
         let groupedInventory = {};
 
@@ -128,35 +125,57 @@
             return foundKey ? item[foundKey] : "";
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return "Belum Ada";
+        function formatDate(dateStr, long = false) {
+            if (!dateStr) return "-";
             try {
                 const date = new Date(dateStr);
                 if (isNaN(date.getTime())) return dateStr;
-                return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
+                const options = long ? 
+                    { day: '2-digit', month: 'long', year: 'numeric' } : 
+                    { day: '2-digit', month: 'short', year: 'numeric' };
+                return new Intl.DateTimeFormat('id-ID', options).format(date);
             } catch (e) { return dateStr; }
         }
 
-        // Tampilkan data dari LocalStorage saat pertama kali buka
+        function updateDatabaseDateLabel() {
+            const dbDateContainer = document.getElementById('dbDateContainer');
+            const dbDateLabel = document.getElementById('dbDateLabel');
+            let latestDate = null;
+
+            // Scanning all records to find the most recent arrival date
+            Object.values(groupedInventory).forEach(item => {
+                item.arrivals.forEach(dateStr => {
+                    const d = new Date(dateStr);
+                    if (!isNaN(d.getTime())) {
+                        if (!latestDate || d > latestDate) latestDate = d;
+                    }
+                });
+            });
+
+            if (latestDate) {
+                dbDateLabel.innerText = formatDate(latestDate, true);
+                dbDateContainer.classList.remove('hidden');
+            }
+        }
+
         function loadCachedData() {
             const cached = localStorage.getItem(STORAGE_KEY);
             if (cached) {
                 groupedInventory = JSON.parse(cached);
                 renderItems(Object.values(groupedInventory));
+                updateDatabaseDateLabel();
                 document.getElementById('lastSyncLabel').innerText = "Mode Offline";
             }
         }
 
-        async function fetchWithRetry(url, retries = 3, backoff = 1000) {
+        async function fetchWithRetry(url, retries = 4, backoff = 1500) {
             for (let i = 0; i < retries; i++) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 detik timeout
-                    
+                    const timeoutId = setTimeout(() => controller.abort(), 25000);
                     const response = await fetch(url, { signal: controller.signal });
                     clearTimeout(timeoutId);
-                    
-                    if (!response.ok) throw new Error("Server Error");
+                    if (!response.ok) throw new Error("Server Response Error");
                     return await response.json();
                 } catch (err) {
                     if (i === retries - 1) throw err;
@@ -167,19 +186,19 @@
 
         async function fetchData() {
             const refreshBtn = document.getElementById('refreshBtn');
-            const refreshText = document.getElementById('refreshText');
             const btnSpinner = document.getElementById('btnSpinner');
             const statusDot = document.getElementById('statusDot');
             const lastSyncLabel = document.getElementById('lastSyncLabel');
+            const refreshText = document.getElementById('refreshText');
 
             refreshBtn.disabled = true;
-            refreshText.innerText = "Sinkronisasi...";
             btnSpinner.classList.remove('hidden');
+            refreshText.innerText = "Syncing...";
             
             try {
                 const data = await fetchWithRetry(API_URL);
-                
                 const newGrouped = {};
+                
                 data.forEach(item => {
                     const sku = String(getValue(item, 'sku') || 'N/A');
                     if (!newGrouped[sku]) {
@@ -197,52 +216,48 @@
                 groupedInventory = newGrouped;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(groupedInventory));
                 
-                statusDot.className = "h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]";
-                lastSyncLabel.innerText = "Terupdate Baru Saja";
+                statusDot.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
+                lastSyncLabel.innerText = "Terupdate";
+                updateDatabaseDateLabel();
                 renderItems(Object.values(groupedInventory));
             } catch (e) {
                 console.error(e);
-                statusDot.className = "h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse";
-                lastSyncLabel.innerText = "Gagal Sinkron";
-                // Jika gagal, data cache tetap ada di layar
+                statusDot.className = "h-2 w-2 rounded-full bg-red-500 animate-pulse";
+                lastSyncLabel.innerText = "Gagal";
             } finally {
                 refreshBtn.disabled = false;
-                refreshText.innerText = "Update Data";
                 btnSpinner.classList.add('hidden');
+                refreshText.innerText = "Update Data";
             }
         }
 
         function renderItems(items) {
             const container = document.getElementById('itemList');
             document.getElementById('totalCount').innerText = items.length;
-            
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 opacity-40"><p class="font-bold">Data Kosong</p></div>`;
+                container.innerHTML = `<div class="text-center py-20 opacity-40 font-bold text-fuchsia-300 italic">Data tidak ditemukan</div>`;
                 return;
             }
-
             container.innerHTML = '';
             items.forEach(item => {
                 const count = item.arrivals.length;
-                const lastDate = count > 0 ? formatDate(item.arrivals[count-1]) : 'Belum Diterima';
-                
+                const lastDate = count > 0 ? formatDate(item.arrivals[count-1]) : 'Belum Ada';
                 const card = document.createElement('div');
-                card.className = `p-6 rounded-[2.2rem] mb-5 border transition-all cursor-pointer active:scale-[0.96] ${count > 0 ? 'bg-white border-fuchsia-100 shadow-sm' : 'bg-fuchsia-50/30 border-dashed border-fuchsia-200'}`;
+                card.className = `p-6 rounded-[2.2rem] mb-5 border transition-all cursor-pointer active:scale-[0.96] ${count > 0 ? 'bg-white border-fuchsia-100 shadow-sm' : 'bg-fuchsia-50/20 border-dashed border-fuchsia-100'}`;
                 card.onclick = () => openModal(item.sku);
-                
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-4">
                         <div class="flex-1">
-                            <span class="text-[10px] font-black text-fuchsia-600 uppercase tracking-[0.15em] mb-1.5 block">${item.sku}</span>
-                            <h3 class="font-bold text-slate-900 leading-tight text-lg mb-2">${item.description}</h3>
-                            <span class="bg-fuchsia-100 text-fuchsia-600 text-[9px] px-2 py-1 rounded-lg font-black uppercase tracking-wider">${item.supplier}</span>
+                            <span class="text-[9px] font-black text-fuchsia-600 uppercase tracking-[0.2em] mb-1.5 block">${item.sku}</span>
+                            <h3 class="font-bold text-slate-900 leading-tight text-lg mb-2 line-clamp-2">${item.description}</h3>
+                            <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
                         </div>
-                        <div class="shrink-0 text-right">
-                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-white text-fuchsia-300 border border-fuchsia-100'} px-3 py-1 rounded-full text-[10px] font-black shadow-sm">${count}x MASUK</div>
+                        <div class="shrink-0">
+                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-white text-fuchsia-200 border border-fuchsia-100'} px-3 py-1 rounded-full text-[9px] font-black shadow-sm">${count}x MASUK</div>
                         </div>
                     </div>
                     <div class="mt-5 pt-4 border-t border-fuchsia-50 flex items-center justify-between">
-                        <span class="text-[10px] font-black text-fuchsia-300 uppercase tracking-[0.1em]">Terakhir</span>
+                        <span class="text-[9px] font-black text-fuchsia-300 uppercase tracking-[0.15em]">Terakhir</span>
                         <span class="text-xs font-bold text-fuchsia-800">${lastDate}</span>
                     </div>
                 `;
@@ -253,27 +268,22 @@
         function openModal(sku) {
             const item = groupedInventory[sku];
             document.getElementById('modalTitle').innerText = item.description;
-            document.getElementById('modalSku').innerText = "DATA SKU: " + item.sku;
+            document.getElementById('modalSku').innerText = "KODE SKU: " + item.sku;
             document.getElementById('modalSupplier').innerText = "Supplier: " + item.supplier;
-            
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
-
             const sortedArrivals = [...item.arrivals].sort((a, b) => new Date(b) - new Date(a));
-            
             if (sortedArrivals.length === 0) {
-                historyList.innerHTML = `<p class="text-fuchsia-300 text-sm italic">Belum ada riwayat kedatangan.</p>`;
+                historyList.innerHTML = `<p class="text-fuchsia-300 text-sm italic py-4">Belum ada riwayat kedatangan barang.</p>`;
             } else {
                 sortedArrivals.forEach((date, i) => {
                     const entry = document.createElement('div');
                     entry.className = "relative";
                     entry.innerHTML = `
-                        <div class="absolute -left-[23px] top-1 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
-                        <div class="flex justify-between items-center bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
-                            <div>
-                                <p class="text-[10px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Diterima</p>
-                                <p class="text-sm font-bold text-fuchsia-900">${formatDate(date)}</p>
-                            </div>
+                        <div class="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
+                        <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
+                            <p class="text-[9px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Diterima Log #${sortedArrivals.length - i}</p>
+                            <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
                         </div>
                     `;
                     historyList.appendChild(entry);
