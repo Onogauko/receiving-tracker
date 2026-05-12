@@ -51,7 +51,7 @@
                     <h1 class="text-2xl font-extrabold tracking-tight text-fuchsia-900">Receiving Log</h1>
                     <p class="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-0.5">Ringkasan Riwayat Kedatangan Barang</p>
                     
-                    <!-- Info Data Update Pindah Ke Sini -->
+                    <!-- Info Data Update di bawah Judul -->
                     <div id="dbDateContainer" class="hidden mt-2 flex items-center gap-1.5 bg-fuchsia-50/50 w-fit px-2 py-0.5 rounded-md border border-fuchsia-100/50">
                         <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">Data Update:</span>
                         <span id="dbDateLabel" class="text-[9px] text-fuchsia-600 font-black tracking-tighter uppercase"></span>
@@ -218,11 +218,11 @@
         function fetchData() {
             const statusDot = document.getElementById('statusDot');
             const lastSyncLabel = document.getElementById('lastSyncLabel');
-            const btnSpinner = document.getElementById('btnSpinner');
+            const btnSpinner = document.getElementById('refreshBtn').querySelector('.spinner');
             const refreshText = document.getElementById('refreshText');
             
-            btnSpinner.classList.remove('hidden');
-            refreshText.innerText = "Syncing...";
+            if (btnSpinner) btnSpinner.classList.remove('hidden');
+            if (refreshText) refreshText.innerText = "Syncing...";
 
             db.ref('inventory').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -238,21 +238,26 @@
                     renderItems([]);
                     lastSyncLabel.innerText = "DB Kosong";
                 }
-                btnSpinner.classList.add('hidden');
-                refreshText.innerText = "Update Data";
+                if (btnSpinner) btnSpinner.classList.add('hidden');
+                if (refreshText) refreshText.innerText = "Update Data";
             });
         }
 
         function parseInput(text) {
             const lines = text.trim().split(/\r?\n/);
-            if (lines.length < 2) throw new Error("Format salah (Data tidak cukup).");
+            if (lines.length < 2) throw new Error("Data tidak ditemukan.");
+            
             const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
             const headers = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/[^a-z0-9]/g, ''));
+            
             const skuIdx = headers.findIndex(h => h.includes('sku'));
             const descIdx = headers.findIndex(h => h.includes('item') || h.includes('desc'));
-            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('date'));
+            // Header fuzzy matching: deteksi 'tanggal' atau 'anggal'
+            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
             const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
+            
             if (skuIdx === -1) throw new Error("Header 'sku' tidak ditemukan.");
+            
             const result = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(delimiter);
@@ -271,14 +276,19 @@
             const input = document.getElementById('dataInput').value;
             const syncBtn = document.getElementById('syncBtn');
             if (!input) return alert("Pilih file atau tempel teks dulu.");
+            
             syncBtn.disabled = true;
             syncBtn.innerText = "Memproses...";
+            
             try {
                 const data = parseInput(input);
-                const updatedData = { ...groupedInventory };
+                // Pastikan kita bekerja dengan salinan data terbaru
+                const updatedData = JSON.parse(JSON.stringify(groupedInventory || {}));
                 
                 data.forEach(item => {
-                    // FIX: Ensure SKU entry exists
+                    if (!item.sku) return;
+
+                    // Buat objek SKU jika belum ada
                     if (!updatedData[item.sku]) {
                         updatedData[item.sku] = { 
                             sku: item.sku, 
@@ -286,17 +296,27 @@
                             supplier: item.supplier, 
                             arrivals: [] 
                         };
+                    } else {
+                        // Update info dasar jika ada perubahan di file baru
+                        updatedData[item.sku].description = item.description || updatedData[item.sku].description;
+                        updatedData[item.sku].supplier = item.supplier || updatedData[item.sku].supplier;
                     }
                     
-                    // FIX: Double Check safety for arrivals array
+                    // Pastikan array arrivals ada dan aman diakses
                     if (!updatedData[item.sku].arrivals) {
                         updatedData[item.sku].arrivals = [];
                     }
 
-                    // Add date if not exists
+                    // Tambahkan tanggal kedatangan jika valid dan belum ada (mencegah duplikat)
                     if (item.date && !updatedData[item.sku].arrivals.includes(item.date)) {
                         updatedData[item.sku].arrivals.push(item.date);
-                        updatedData[item.sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
+                    }
+                });
+
+                // Urutkan semua riwayat tanggal (Terbaru di atas) untuk setiap SKU
+                Object.keys(updatedData).forEach(sku => {
+                    if (updatedData[sku].arrivals) {
+                        updatedData[sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
                     }
                 });
 
@@ -306,6 +326,7 @@
                 alert("Berhasil Sinkronisasi Cloud!");
             } catch (e) {
                 alert("Gagal: " + e.message);
+                console.error(e);
             } finally {
                 syncBtn.disabled = false;
                 syncBtn.innerText = "Sinkronkan ke Cloud";
@@ -317,10 +338,11 @@
             const year = document.getElementById('cleanupYear').value;
             const cleanupBtn = document.getElementById('cleanupBtn');
             if (!confirm(`Hapus SEMUA riwayat bulan ${month}/${year}?`)) return;
+            
             cleanupBtn.disabled = true;
             cleanupBtn.innerText = "Menghapus...";
             try {
-                const updatedData = { ...groupedInventory };
+                const updatedData = JSON.parse(JSON.stringify(groupedInventory));
                 Object.keys(updatedData).forEach(sku => {
                     if (updatedData[sku].arrivals) {
                         updatedData[sku].arrivals = updatedData[sku].arrivals.filter(dateStr => {
