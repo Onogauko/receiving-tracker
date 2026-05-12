@@ -19,7 +19,7 @@
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #f0abfc; border-radius: 10px; }
+        ::-webkit-scrollbar-bottom { background: #f0abfc; border-radius: 10px; }
 
         .history-line::before {
             content: '';
@@ -67,7 +67,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                         <button onclick="openUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58-4-8 4s-8-1.79-8-4"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -193,21 +193,42 @@
         // --- UTILITIES ---
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
-            const parts = dateStr.trim().split(/[\/\-]/);
-            if (parts.length === 3) {
-                const day = parts[0].padStart(2, '0');
-                const month = parts[1].padStart(2, '0');
-                let year = parts[2];
-                if (year.length === 2) year = "20" + year;
-                return `${year}-${month}-${day}`; 
+
+            const cleanStr = dateStr.trim().replace(/\s+/g, '');
+            const parts = cleanStr.split(/[\/\-\.]/);
+
+            if (parts.length !== 3) return null;
+
+            let day = parts[0];
+            let month = parts[1];
+            let year = parts[2];
+
+            // Pastikan angka
+            day = parseInt(day, 10);
+            month = parseInt(month, 10);
+            year = parseInt(year, 10);
+
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                return null;
             }
-            return null;
+
+            // Handle tahun 2 digit
+            if (year < 100) {
+                year += 2000;
+            }
+
+            // Validasi basic
+            if (day < 1 || day > 31) return null;
+            if (month < 1 || month > 12) return null;
+
+            return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         }
 
         function formatDate(dateStr, long = false) {
-            if (!dateStr) return "-";
+            if (!dateStr || dateStr === "null") return "-";
             try {
                 const parts = dateStr.split('-');
+                if (parts.length !== 3) return dateStr;
                 const date = new Date(parts[0], parts[1]-1, parts[2]);
                 if (isNaN(date.getTime())) return dateStr;
                 const options = long ? { day: '2-digit', month: 'long', year: 'numeric' } : { day: '2-digit', month: 'short', year: 'numeric' };
@@ -227,6 +248,15 @@
             db.ref('inventory').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    Object.keys(data).forEach(sku => {
+                        if (data[sku].arrivals) {
+                            data[sku].arrivals = Object.values(data[sku].arrivals)
+                                .filter(d => d && typeof d === 'string' && d.includes('-'))
+                                .sort((a, b) => b.localeCompare(a));
+                        } else {
+                            data[sku].arrivals = [];
+                        }
+                    });
                     groupedInventory = data;
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
                     renderItems(Object.values(data));
@@ -246,24 +276,21 @@
         function parseInput(text) {
             const lines = text.trim().split(/\r?\n/);
             if (lines.length < 2) throw new Error("Data tidak ditemukan.");
-            
             const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
             const headers = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/[^a-z0-9]/g, ''));
-            
             const skuIdx = headers.findIndex(h => h.includes('sku'));
             const descIdx = headers.findIndex(h => h.includes('item') || h.includes('desc'));
-            // Header fuzzy matching: deteksi 'tanggal' atau 'anggal'
             const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
             const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
-            
-            if (skuIdx === -1) throw new Error("Header 'sku' tidak ditemukan.");
-            
+            if (skuIdx === -1) throw new Error("Kolom 'sku' tidak ditemukan.");
             const result = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(delimiter);
                 if (cols.length < 2) continue;
+                const sku = cols[skuIdx]?.trim().padStart(7, '0') || "";
+                if (!sku || sku === "0000000") continue;
                 result.push({
-                    sku: cols[skuIdx]?.trim().padStart(7, '0') || "",
+                    sku: sku,
                     description: cols[descIdx]?.trim() || "Tanpa Deskripsi",
                     date: parseIndoDate(cols[dateIdx]),
                     supplier: cols[suppIdx]?.trim() || "-"
@@ -275,61 +302,124 @@
         async function processDataUpload() {
             const input = document.getElementById('dataInput').value;
             const syncBtn = document.getElementById('syncBtn');
-            if (!input) return alert("Pilih file atau tempel teks dulu.");
-            
-            syncBtn.disabled = true;
-            syncBtn.innerText = "Memproses...";
-            
-            try {
-                const data = parseInput(input);
-                // Pastikan kita bekerja dengan salinan data terbaru
-                const updatedData = JSON.parse(JSON.stringify(groupedInventory || {}));
-                
-                data.forEach(item => {
-                    if (!item.sku) return;
 
-                    // Buat objek SKU jika belum ada
+            // Validasi input
+            if (!input || input.trim() === "") {
+                alert("Pilih file atau tempel teks dulu.");
+                return;
+            }
+
+            // Loading state
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = `
+                <div class="flex items-center justify-center gap-2">
+                    <div class="spinner border-white/30 border-l-white"></div>
+                    <span>Memproses...</span>
+                </div>
+            `;
+
+            try {
+                // Parse data input
+                const data = parseInput(input);
+
+                // Clone data lama supaya aman
+                const updatedData = JSON.parse(
+                    JSON.stringify(groupedInventory || {})
+                );
+
+                // Loop semua row upload
+                data.forEach(item => {
+                    // Skip kalau SKU kosong
+                    if (!item.sku || item.sku.trim() === "") return;
+
+                    // =========================
+                    // BUAT SKU BARU
+                    // =========================
                     if (!updatedData[item.sku]) {
-                        updatedData[item.sku] = { 
-                            sku: item.sku, 
-                            description: item.description, 
-                            supplier: item.supplier, 
-                            arrivals: [] 
+                        updatedData[item.sku] = {
+                            sku: item.sku,
+                            description: item.description || "Tanpa Deskripsi",
+                            supplier: item.supplier || "-",
+                            arrivals: []
                         };
-                    } else {
-                        // Update info dasar jika ada perubahan di file baru
-                        updatedData[item.sku].description = item.description || updatedData[item.sku].description;
-                        updatedData[item.sku].supplier = item.supplier || updatedData[item.sku].supplier;
                     }
-                    
-                    // Pastikan array arrivals ada dan aman diakses
-                    if (!updatedData[item.sku].arrivals) {
+
+                    // =========================
+                    // UPDATE INFO TERBARU
+                    // =========================
+                    updatedData[item.sku].description =
+                        item.description || updatedData[item.sku].description;
+
+                    updatedData[item.sku].supplier =
+                        item.supplier || updatedData[item.sku].supplier;
+
+                    // Pastikan arrivals array
+                    if (!Array.isArray(updatedData[item.sku].arrivals)) {
                         updatedData[item.sku].arrivals = [];
                     }
 
-                    // Tambahkan tanggal kedatangan jika valid dan belum ada (mencegah duplikat)
-                    if (item.date && !updatedData[item.sku].arrivals.includes(item.date)) {
+                    // =========================
+                    // TAMBAHKAN TANGGAL
+                    // =========================
+                    // SEKARANG AKAN SELALU NAMBAH
+                    // walaupun tanggal sama
+                    if (item.date) {
                         updatedData[item.sku].arrivals.push(item.date);
                     }
                 });
 
-                // Urutkan semua riwayat tanggal (Terbaru di atas) untuk setiap SKU
+                // =========================
+                // SORT TANGGAL TERBARU
+                // =========================
                 Object.keys(updatedData).forEach(sku => {
-                    if (updatedData[sku].arrivals) {
-                        updatedData[sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
+                    if (Array.isArray(updatedData[sku].arrivals)) {
+                        updatedData[sku].arrivals.sort((a, b) => {
+                            return new Date(b) - new Date(a);
+                        });
                     }
                 });
 
+                // =========================
+                // UPLOAD KE FIREBASE
+                // =========================
                 await db.ref('inventory').set(updatedData);
-                closeUploadModal();
+
+                // Update variable global
+                groupedInventory = updatedData;
+
+                // Simpan localStorage
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify(updatedData)
+                );
+
+                // Render ulang UI
+                renderItems(Object.values(updatedData));
+
+                // Update tanggal database
+                updateDatabaseDateLabel();
+
+                // Reset input
                 document.getElementById('dataInput').value = "";
+                document.getElementById('fileInput').value = "";
+                document.getElementById('fileNameDisplay').innerText =
+                    "Atau tempel teks di bawah";
+
+                // Tutup modal
+                closeUploadModal();
+
+                // Success
                 alert("Berhasil Sinkronisasi Cloud!");
+
             } catch (e) {
-                alert("Gagal: " + e.message);
                 console.error(e);
+                alert(
+                    "Gagal upload data:\n\n" + e.message
+                );
             } finally {
+                // Reset button
                 syncBtn.disabled = false;
-                syncBtn.innerText = "Sinkronkan ke Cloud";
+                syncBtn.innerHTML = `Sinkronkan ke Cloud`;
             }
         }
 
@@ -338,7 +428,6 @@
             const year = document.getElementById('cleanupYear').value;
             const cleanupBtn = document.getElementById('cleanupBtn');
             if (!confirm(`Hapus SEMUA riwayat bulan ${month}/${year}?`)) return;
-            
             cleanupBtn.disabled = true;
             cleanupBtn.innerText = "Menghapus...";
             try {
@@ -369,6 +458,11 @@
                 return;
             }
             container.innerHTML = '';
+            items.sort((a, b) => {
+                const dateA = (a.arrivals && a.arrivals.length > 0) ? a.arrivals[0] : "";
+                const dateB = (b.arrivals && b.arrivals.length > 0) ? b.arrivals[0] : "";
+                return dateB.localeCompare(dateA);
+            });
             items.forEach(item => {
                 const count = item.arrivals ? item.arrivals.length : 0;
                 const lastDate = count > 0 ? formatDate(item.arrivals[0]) : 'Belum Ada';
@@ -396,15 +490,15 @@
         }
 
         function updateDatabaseDateLabel() {
-            let latest = null;
+            let latestStr = "";
             Object.values(groupedInventory).forEach(item => {
                 if (item.arrivals && item.arrivals.length > 0) {
-                    const d = new Date(item.arrivals[0]);
-                    if (!latest || d > latest) latest = d;
+                    const topDate = item.arrivals[0];
+                    if (topDate > latestStr) latestStr = topDate;
                 }
             });
-            if (latest) {
-                document.getElementById('dbDateLabel').innerText = formatDate(latest.toISOString().split('T')[0], true);
+            if (latestStr) {
+                document.getElementById('dbDateLabel').innerText = formatDate(latestStr, true);
                 document.getElementById('dbDateContainer').classList.remove('hidden');
             }
         }
