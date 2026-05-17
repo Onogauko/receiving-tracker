@@ -577,14 +577,15 @@
                     document.getElementById('pinInput').focus();
                 } else {
                     // PIN BERHASIL !
-                    closePinModal();
+                    const action = pendingAdminAction; // Simpan nilai aksi sebelum modal ditutup
+                    closePinModal(); // Fungsi ini mengatur ulang pendingAdminAction
                     
                     // Lanjutkan ke aksi yang diminta
-                    if (pendingAdminAction === 'cleanup') {
+                    if (action === 'cleanup') {
                         document.getElementById('cleanupModal').classList.remove('hidden');
-                    } else if (pendingAdminAction === 'upload') {
+                    } else if (action === 'upload') {
                         document.getElementById('uploadModal').classList.remove('hidden');
-                    } else if (pendingAdminAction === 'changePin') {
+                    } else if (action === 'changePin') {
                         document.getElementById('changePinModal').classList.remove('hidden');
                         setTimeout(() => document.getElementById('newPinInput').focus(), 100);
                     }
