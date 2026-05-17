@@ -12,7 +12,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
@@ -22,7 +22,7 @@
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
+
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #f0abfc; border-radius: 10px; }
@@ -44,6 +44,7 @@
             width: 14px;
             height: 14px;
             animation: spin 1s linear infinite;
+            display: inline-block;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -56,8 +57,7 @@
                 <div>
                     <h1 class="text-2xl font-extrabold tracking-tight text-fuchsia-900">Receiving Log</h1>
                     <p class="text-[10px] text-fuchsia-400 font-bold uppercase tracking-widest mt-0.5">Ringkasan Riwayat Kedatangan Barang</p>
-                    
-                    <!-- Info Data Update di bawah Judul -->
+
                     <div id="dbDateContainer" class="hidden mt-2 flex items-center gap-1.5 bg-fuchsia-50/50 w-fit px-2 py-0.5 rounded-md border border-fuchsia-100/50">
                         <span class="text-[7px] text-slate-400 font-bold uppercase tracking-tighter">Data Update:</span>
                         <span id="dbDateLabel" class="text-[9px] text-fuchsia-600 font-black tracking-tighter uppercase"></span>
@@ -69,22 +69,21 @@
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
                     <div class="flex gap-2">
-                        <!-- Tombol Ubah PIN Baru -->
                         <button onclick="openPinModal('changePin')" class="p-2 bg-slate-50 text-slate-500 rounded-xl hover:bg-slate-100 transition-all shadow-sm active:scale-90" title="Ubah PIN">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3l5.257-5.257A6 6 0 1115 7z"></path></svg>
                         </button>
-                        <button onclick="openCleanupModal()" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm active:scale-90" title="Hapus Data">
+                        <button onclick="openPinModal('cleanup')" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm active:scale-90" title="Hapus Data">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
-                        <button onclick="openUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90" title="Upload Data">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58-4-8 4s-8-1.79-8-4"></path></svg>
+                        <button onclick="openPinModal('upload')" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90" title="Upload Data">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Cari SKU, nama barang, atau supplier..." 
+                <input type="text" id="searchInput" placeholder="Cari SKU, nama barang, atau supplier..."
                     class="w-full bg-fuchsia-50 border-2 border-fuchsia-100/50 rounded-2xl py-3 pl-11 pr-4 text-sm focus:bg-white focus:border-fuchsia-500 transition-all outline-none shadow-inner">
                 <div class="absolute left-4 top-3 text-fuchsia-300">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -105,13 +104,13 @@
                     <span class="text-[9px] font-bold text-fuchsia-400 uppercase tracking-widest">SKU Terdaftar</span>
                     <span id="totalCount" class="text-xl font-black text-fuchsia-900 leading-none">0</span>
                 </div>
-                
-                <button id="refreshBtn" onclick="fetchData()" class="bg-fuchsia-700 text-white px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 active:scale-95 transition-all shadow-lg shadow-fuchsia-200">
-                    <div id="btnSpinner" class="spinner hidden border-white/30 border-l-white"></div>
+
+                <button id="refreshBtn" onclick="refreshData()" class="bg-fuchsia-700 text-white px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 active:scale-95 transition-all shadow-lg shadow-fuchsia-200">
+                    <div id="btnSpinner" class="spinner hidden" style="border-color:rgba(255,255,255,0.3); border-left-color:white;"></div>
                     <span id="refreshText" class="text-xs">Update Data</span>
                 </button>
             </nav>
-            
+
             <div class="pb-3 px-5 text-center border-t border-fuchsia-50 pt-2">
                 <p class="text-[8px] font-medium text-fuchsia-300 tracking-wider">
                     © 2026 Receiving Tracker — by Jenta Zebua MCT
@@ -132,7 +131,7 @@
                 <input type="password" id="pinInput" placeholder="••••••" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-center text-2xl tracking-[0.4em] font-black outline-none focus:border-fuchsia-500 text-slate-700 mb-6 transition-all" inputmode="numeric">
                 <div class="flex flex-col gap-3">
                     <button id="verifyPinBtn" onclick="verifyPin()" class="w-full py-3.5 font-bold text-white bg-fuchsia-600 rounded-xl active:scale-95 transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-fuchsia-200">
-                        <div id="pinSpinner" class="spinner hidden border-white/30 border-l-white"></div>
+                        <div id="pinSpinner" class="spinner hidden" style="border-color:rgba(255,255,255,0.3); border-left-color:white;"></div>
                         <span id="pinBtnText">Verifikasi PIN</span>
                     </button>
                     <button onclick="closePinModal()" class="w-full py-3 font-bold text-slate-400 hover:bg-slate-50 rounded-xl text-sm transition-all">Batal</button>
@@ -140,7 +139,7 @@
             </div>
         </div>
 
-        <!-- Modal Ubah PIN Baru -->
+        <!-- Modal Ubah PIN -->
         <div id="changePinModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[130]">
             <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl animate-slide-up text-center">
                 <div class="mb-6">
@@ -189,7 +188,7 @@
                     <p class="text-[10px] text-slate-500">Gunakan file CSV atau tempel baris Excel.</p>
                 </div>
                 <div id="dropZone" class="mb-4 border-2 border-dashed border-fuchsia-200 rounded-2xl p-6 flex flex-col items-center justify-center bg-fuchsia-50/30 cursor-pointer" onclick="document.getElementById('fileInput').click()">
-                    <input type="file" id="fileInput" accept=".csv, .txt" class="hidden" onchange="handleFileSelect(event)">
+                    <input type="file" id="fileInput" accept=".csv,.txt" class="hidden" onchange="handleFileSelect(event)">
                     <div class="text-fuchsia-400 mb-1">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                     </div>
@@ -222,6 +221,9 @@
     </div>
 
     <script>
+        // =============================================
+        // KONFIGURASI & INISIALISASI
+        // =============================================
         const firebaseConfig = {
             apiKey: "AIzaSyAB1YK8Jzzhot_6KTgnBtCODPq5BVFrH_c",
             authDomain: "magenta-aeon.firebaseapp.com",
@@ -235,260 +237,204 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const STORAGE_KEY = "receiving_tracker_data_v2";
-        let groupedInventory = {};
-        let pendingAdminAction = ""; // Menyimpan aksi yang tertunda (upload/cleanup/changePin)
 
-        // --- SISTEM KEAMANAN HASH SHA-256 ---
-        // Fungsi untuk mengenkripsi PIN menjadi kode acak
+        let groupedInventory = {};
+        let pendingAdminAction = "";
+        let activeSearchQuery = "";     // FIX: simpan state search aktif
+        let firebaseListener = null;    // FIX: simpan referensi listener agar bisa di-off
+
+        // =============================================
+        // UTILITAS: HASH & TANGGAL
+        // =============================================
+
+        // Helper admin: buka Console → ketik getHash("PIN_ANDA")
         async function hashPIN(pin) {
             const msgBuffer = new TextEncoder().encode(pin);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return Array.from(new Uint8Array(hashBuffer))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
         }
-
-        // FUNGSI BANTUAN ADMIN: Buka Inspect Element -> Console -> Ketik: getHash("PIN_SAYA")
-        // untuk mendapatkan kode Hash yang harus disimpan ke Firebase
         window.getHash = async function(pin) {
             const result = await hashPIN(pin);
-            console.log("%c=== SIMPAN KODE HASH INI KE FIREBASE ===", "color: #a21caf; font-size: 16px; font-weight: bold;");
+            console.log("%c=== SIMPAN KODE HASH INI KE FIREBASE ===", "color:#a21caf;font-size:16px;font-weight:bold;");
             console.log(result);
             return result;
         };
 
-        // --- UTILITIES ---
+        /**
+         * FIX: parseIndoDate sekarang menangani TIGA format:
+         * 1. DD/MM/YYYY atau DD-MM-YYYY atau DD.MM.YYYY  (input Excel/CSV umum)
+         * 2. YYYY-MM-DD  (format ISO — sudah benar, langsung dikembalikan)
+         * 3. Format tidak valid → return null
+         */
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
+            dateStr = String(dateStr).trim().split(' ')[0]; // buang bagian waktu
 
-            dateStr = String(dateStr).trim();
-            dateStr = dateStr.split(' ')[0];
+            // Format ISO: YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const [y, m, d] = dateStr.split('-').map(Number);
+                if (m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2020 && y <= 2100) return dateStr;
+                return null;
+            }
+
+            // Format DD/MM/YYYY atau variannya
             const parts = dateStr.split(/[\/\-\.]/);
-
             if (parts.length !== 3) return null;
-
-            let day = parseInt(parts[0], 10);
+            let day   = parseInt(parts[0], 10);
             let month = parseInt(parts[1], 10);
-            let year = parseInt(parts[2], 10);
-
+            let year  = parseInt(parts[2], 10);
             if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-
             if (year < 100) year += 2000;
-
-            if (day < 1 || day > 31) return null;
-            if (month < 1 || month > 12) return null;
-            if (year < 2020 || year > 2100) return null;
-
-            return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2020 || year > 2100) return null;
+            return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         }
 
         function formatDate(dateStr, long = false) {
             if (!dateStr || dateStr === "null") return "-";
             try {
-                const parts = dateStr.split('-');
-                if (parts.length !== 3) return dateStr;
-                const date = new Date(parts[0], parts[1]-1, parts[2]);
+                const [y, m, d] = dateStr.split('-');
+                const date = new Date(Number(y), Number(m) - 1, Number(d));
                 if (isNaN(date.getTime())) return dateStr;
-                const options = long ? { day: '2-digit', month: 'long', year: 'numeric' } : { day: '2-digit', month: 'short', year: 'numeric' };
-                return new Intl.DateTimeFormat('id-ID', options).format(date);
-            } catch (e) { return dateStr; }
+                const opts = long
+                    ? { day: '2-digit', month: 'long',  year: 'numeric' }
+                    : { day: '2-digit', month: 'short', year: 'numeric' };
+                return new Intl.DateTimeFormat('id-ID', opts).format(date);
+            } catch { return dateStr; }
         }
 
-        function fetchData() {
-            const statusDot = document.getElementById('statusDot');
-            const lastSyncLabel = document.getElementById('lastSyncLabel');
-            const btnSpinner = document.getElementById('refreshBtn').querySelector('.spinner');
-            const refreshText = document.getElementById('refreshText');
-            
-            if (btnSpinner) btnSpinner.classList.remove('hidden');
-            if (refreshText) refreshText.innerText = "Syncing...";
+        // =============================================
+        // DATA: FETCH & RENDER
+        // =============================================
 
-            db.ref('inventory').on('value', (snapshot) => {
+        /**
+         * FIX: Lepas listener lama sebelum membuat yang baru,
+         * mencegah memory leak dan render duplikat.
+         */
+        function fetchData() {
+            const statusDot     = document.getElementById('statusDot');
+            const lastSyncLabel = document.getElementById('lastSyncLabel');
+            const btnSpinner    = document.getElementById('btnSpinner');
+            const refreshText   = document.getElementById('refreshText');
+
+            btnSpinner.classList.remove('hidden');
+            refreshText.innerText = "Syncing...";
+            statusDot.className = "h-2 w-2 rounded-full bg-yellow-400";
+            lastSyncLabel.innerText = "Connecting...";
+
+            // Lepas listener lama jika ada
+            if (firebaseListener) {
+                db.ref('inventory').off('value', firebaseListener);
+            }
+
+            firebaseListener = db.ref('inventory').on('value', (snapshot) => {
                 const data = snapshot.val();
+                btnSpinner.classList.add('hidden');
+                refreshText.innerText = "Update Data";
+
                 if (data) {
+                    // Normalisasi: pastikan arrivals selalu array string ISO, tanpa duplikat
                     Object.keys(data).forEach(sku => {
-                        if (data[sku].arrivals) {
-                            data[sku].arrivals = Object.values(data[sku].arrivals)
-                                .filter(d => d && typeof d === 'string' && d.includes('-'))
-                                .sort((a, b) => b.localeCompare(a));
-                        } else {
-                            data[sku].arrivals = [];
+                        const raw = data[sku].arrivals;
+                        let arrivals = [];
+                        if (raw) {
+                            // Firebase mungkin kembalikan object (key numerik) atau array
+                            arrivals = Object.values(raw)
+                                .filter(d => d && typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d));
                         }
+                        // FIX: hapus duplikat, lalu urutkan terbaru di atas
+                        data[sku].arrivals = [...new Set(arrivals)].sort((a, b) => b.localeCompare(a));
                     });
+
                     groupedInventory = data;
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                    renderItems(Object.values(data));
                     updateDatabaseDateLabel();
                     statusDot.className = "h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
                     lastSyncLabel.innerText = "Cloud Aktif";
                 } else {
                     groupedInventory = {};
-                    renderItems([]);
+                    statusDot.className = "h-2 w-2 rounded-full bg-slate-300";
                     lastSyncLabel.innerText = "DB Kosong";
                 }
-                if (btnSpinner) btnSpinner.classList.add('hidden');
-                if (refreshText) refreshText.innerText = "Update Data";
+
+                // FIX: render ulang dengan mempertahankan filter search yang aktif
+                applySearchAndRender();
+
+            }, (error) => {
+                // Tangani error koneksi Firebase
+                console.error("Firebase error:", error);
+                btnSpinner.classList.add('hidden');
+                refreshText.innerText = "Update Data";
+                statusDot.className = "h-2 w-2 rounded-full bg-red-500";
+                lastSyncLabel.innerText = "Offline";
+
+                // Fallback ke cache lokal
+                const cached = localStorage.getItem(STORAGE_KEY);
+                if (cached) {
+                    try {
+                        groupedInventory = JSON.parse(cached);
+                        applySearchAndRender();
+                    } catch { /* cache rusak, biarkan kosong */ }
+                }
             });
         }
 
-        function parseInput(text) {
-            const lines = text.trim().split(/\r?\n/);
-            if (lines.length < 2) throw new Error("Data tidak ditemukan.");
-            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
-            const headers = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/[^a-z0-9]/g, ''));
-            const skuIdx = headers.findIndex(h => h.includes('sku'));
-            const descIdx = headers.findIndex(h => h.includes('item') || h.includes('desc'));
-            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
-            const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
-            if (skuIdx === -1) throw new Error("Kolom 'sku' tidak ditemukan.");
-            const result = [];
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(delimiter);
-                if (cols.length < 2) continue;
-                
-                console.log("RAW DATE:", cols[dateIdx]);
-                console.log("PARSED:", parseIndoDate(cols[dateIdx]));
-
-                const sku = cols[skuIdx]?.trim().padStart(7, '0') || "";
-                if (!sku || sku === "0000000") continue;
-                result.push({
-                    sku: sku,
-                    description: cols[descIdx]?.trim() || "Tanpa Deskripsi",
-                    date: parseIndoDate(cols[dateIdx]),
-                    supplier: cols[suppIdx]?.trim() || "-"
-                });
-            }
-            return result;
+        // FIX: pisah fungsi "Update Data" (refresh manual) dari listener realtime
+        function refreshData() {
+            // Hanya picu fetch ulang; listener .on('value') sudah realtime
+            fetchData();
         }
 
-        async function processDataUpload() {
-            const input = document.getElementById('dataInput').value;
-            const syncBtn = document.getElementById('syncBtn');
-
-            if (!input || input.trim() === "") {
-                alert("Pilih file atau tempel teks dulu.");
-                return;
-            }
-
-            syncBtn.disabled = true;
-            syncBtn.innerHTML = `
-                <div class="flex items-center justify-center gap-2">
-                    <div class="spinner border-white/30 border-l-white"></div>
-                    <span>Memproses...</span>
-                </div>
-            `;
-
-            try {
-                const data = parseInput(input);
-                const updatedData = JSON.parse(JSON.stringify(groupedInventory || {}));
-
-                data.forEach(item => {
-                    if (!item.sku || item.sku.trim() === "") return;
-
-                    if (!updatedData[item.sku]) {
-                        updatedData[item.sku] = {
-                            sku: item.sku,
-                            description: item.description || "Tanpa Deskripsi",
-                            supplier: item.supplier || "-",
-                            arrivals: []
-                        };
-                    }
-
-                    updatedData[item.sku].description = item.description || updatedData[item.sku].description;
-                    updatedData[item.sku].supplier = item.supplier || updatedData[item.sku].supplier;
-
-                    if (!Array.isArray(updatedData[item.sku].arrivals)) {
-                        updatedData[item.sku].arrivals = [];
-                    }
-
-                    if (item.date) {
-                        updatedData[item.sku].arrivals.push(item.date);
-                    }
-                });
-
-                Object.keys(updatedData).forEach(sku => {
-                    if (Array.isArray(updatedData[sku].arrivals)) {
-                        updatedData[sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
-                    }
-                });
-
-                await db.ref('inventory').set(updatedData);
-
-                groupedInventory = updatedData;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-                renderItems(Object.values(updatedData));
-                updateDatabaseDateLabel();
-
-                document.getElementById('dataInput').value = "";
-                document.getElementById('fileInput').value = "";
-                document.getElementById('fileNameDisplay').innerText = "Atau tempel teks di bawah";
-
-                closeUploadModal();
-                alert("Berhasil Sinkronisasi Cloud!");
-
-            } catch (e) {
-                console.error(e);
-                alert("Gagal upload data:\n\n" + e.message);
-            } finally {
-                syncBtn.disabled = false;
-                syncBtn.innerHTML = `Sinkronkan ke Cloud`;
-            }
-        }
-
-        async function processCleanup() {
-            const month = document.getElementById('cleanupMonth').value;
-            const year = document.getElementById('cleanupYear').value;
-            const cleanupBtn = document.getElementById('cleanupBtn');
-            if (!confirm(`Hapus SEMUA riwayat bulan ${month}/${year}?`)) return;
-            cleanupBtn.disabled = true;
-            cleanupBtn.innerText = "Menghapus...";
-            try {
-                const updatedData = JSON.parse(JSON.stringify(groupedInventory));
-                Object.keys(updatedData).forEach(sku => {
-                    if (updatedData[sku].arrivals) {
-                        updatedData[sku].arrivals = updatedData[sku].arrivals.filter(dateStr => {
-                            const [y, m, d] = dateStr.split('-');
-                            return !(m === month && y === year);
-                        });
-                    }
-                });
-                await db.ref('inventory').set(updatedData);
-                closeCleanupModal();
-            } catch (e) {
-                alert("Gagal: " + e.message);
-            } finally {
-                cleanupBtn.disabled = false;
-                cleanupBtn.innerText = "Hapus Permanen";
-            }
+        /**
+         * FIX: Fungsi render terpusat yang selalu menghormati query search aktif.
+         * Dipanggil dari listener Firebase DAN dari event input search.
+         */
+        function applySearchAndRender() {
+            const val = activeSearchQuery.toLowerCase().trim();
+            const all = Object.values(groupedInventory);
+            const filtered = val
+                ? all.filter(i =>
+                    i.sku.toLowerCase().includes(val) ||
+                    (i.description || "").toLowerCase().includes(val) ||
+                    (i.supplier || "").toLowerCase().includes(val))
+                : all;
+            renderItems(filtered);
         }
 
         function renderItems(items) {
             const container = document.getElementById('itemList');
-            document.getElementById('totalCount').innerText = items.length;
+            document.getElementById('totalCount').innerText = Object.keys(groupedInventory).length; // selalu tampilkan total, bukan total filter
+
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 opacity-30 font-bold italic">Belum ada data</div>`;
+                container.innerHTML = `<div class="text-center py-20 opacity-30 font-bold italic">
+                    ${activeSearchQuery ? 'Tidak ada hasil untuk "' + activeSearchQuery + '"' : 'Belum ada data'}
+                </div>`;
                 return;
             }
-            container.innerHTML = '';
-            items.sort((a, b) => {
-                const dateA = (a.arrivals && a.arrivals.length > 0) ? a.arrivals[0] : "";
-                const dateB = (b.arrivals && b.arrivals.length > 0) ? b.arrivals[0] : "";
-                return dateB.localeCompare(dateA);
+
+            // Urutkan: item dengan tanggal kedatangan terbaru di atas
+            items = [...items].sort((a, b) => {
+                const dA = a.arrivals && a.arrivals.length > 0 ? a.arrivals[0] : "";
+                const dB = b.arrivals && b.arrivals.length > 0 ? b.arrivals[0] : "";
+                return dB.localeCompare(dA);
             });
+
+            container.innerHTML = '';
             items.forEach(item => {
-                const count = item.arrivals ? item.arrivals.length : 0;
+                const count    = item.arrivals ? item.arrivals.length : 0;
                 const lastDate = count > 0 ? formatDate(item.arrivals[0]) : 'Belum Ada';
-                const card = document.createElement('div');
+                const card     = document.createElement('div');
                 card.className = "p-5 rounded-[2.2rem] mb-4 border bg-white border-fuchsia-100 shadow-sm cursor-pointer active:scale-95 transition-all";
-                card.onclick = () => openModal(item.sku);
+                card.onclick   = () => openModal(item.sku);
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-4">
-                        <div class="flex-1">
-                            <span class="text-[8px] font-black text-fuchsia-600 uppercase tracking-widest mb-1 block">${item.sku}</span>
-                            <h3 class="font-bold text-slate-900 leading-tight text-sm mb-2 line-clamp-2">${item.description}</h3>
-                            <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-fuchsia-100">${item.supplier}</span>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-[8px] font-black text-fuchsia-600 uppercase tracking-widest mb-1 block">${escapeHtml(item.sku)}</span>
+                            <h3 class="font-bold text-slate-900 leading-tight text-sm mb-2 line-clamp-2">${escapeHtml(item.description || '-')}</h3>
+                            <span class="bg-fuchsia-50 text-fuchsia-500 text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-fuchsia-100 inline-block max-w-full truncate">${escapeHtml(item.supplier || '-')}</span>
                         </div>
                         <div class="shrink-0">
-                             <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-200'} px-2.5 py-1 rounded-full text-[8px] font-black">${count}x</div>
+                            <div class="${count > 0 ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-200'} px-2.5 py-1 rounded-full text-[8px] font-black">${count}x</div>
                         </div>
                     </div>
                     <div class="mt-4 pt-3 border-t border-fuchsia-50 flex items-center justify-between">
@@ -504,47 +450,230 @@
             let latestStr = "";
             Object.values(groupedInventory).forEach(item => {
                 if (item.arrivals && item.arrivals.length > 0) {
-                    const topDate = item.arrivals[0];
-                    if (topDate > latestStr) latestStr = topDate;
+                    if (item.arrivals[0] > latestStr) latestStr = item.arrivals[0];
                 }
             });
             if (latestStr) {
                 document.getElementById('dbDateLabel').innerText = formatDate(latestStr, true);
                 document.getElementById('dbDateContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('dbDateContainer').classList.add('hidden');
             }
         }
+
+        // FIX: escapeHtml mencegah XSS saat data dari user dirender ke innerHTML
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // =============================================
+        // UPLOAD DATA
+        // =============================================
+
+        function parseInput(text) {
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) throw new Error("Data tidak ditemukan. Pastikan ada baris header dan minimal satu baris data.");
+
+            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+            const headers   = lines[0].toLowerCase().split(delimiter).map(h => h.trim().replace(/[^a-z0-9]/g, ''));
+
+            const skuIdx  = headers.findIndex(h => h.includes('sku'));
+            const descIdx = headers.findIndex(h => h.includes('item') || h.includes('desc'));
+            const dateIdx = headers.findIndex(h => h.includes('tanggal') || h.includes('anggal') || h.includes('date'));
+            const suppIdx = headers.findIndex(h => h.includes('supplier') || h.includes('nama'));
+
+            if (skuIdx === -1)  throw new Error("Kolom 'SKU' tidak ditemukan di baris header.");
+            if (dateIdx === -1) throw new Error("Kolom 'Tanggal' atau 'Date' tidak ditemukan di baris header.");
+
+            const result = [];
+            const skipped = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const cols = line.split(delimiter);
+                const sku  = cols[skuIdx]?.trim().padStart(7, '0') || "";
+                if (!sku || sku === "0000000") { skipped.push(i + 1); continue; }
+
+                const parsedDate = parseIndoDate(cols[dateIdx]);
+                if (!parsedDate) {
+                    console.warn(`Baris ${i + 1}: tanggal tidak valid ("${cols[dateIdx]}"), baris dilewati.`);
+                    skipped.push(i + 1);
+                    continue;
+                }
+
+                result.push({
+                    sku,
+                    description: cols[descIdx]?.trim() || "Tanpa Deskripsi",
+                    date: parsedDate,
+                    supplier: suppIdx !== -1 ? (cols[suppIdx]?.trim() || "-") : "-"
+                });
+            }
+
+            if (result.length === 0) throw new Error(`Tidak ada baris valid yang bisa diproses. Baris dilewati: ${skipped.join(', ')}`);
+            if (skipped.length > 0) console.info(`Baris dilewati (SKU/tanggal tidak valid): ${skipped.join(', ')}`);
+
+            return result;
+        }
+
+        async function processDataUpload() {
+            const input   = document.getElementById('dataInput').value;
+            const syncBtn = document.getElementById('syncBtn');
+
+            if (!input || !input.trim()) {
+                alert("Pilih file atau tempel teks dulu.");
+                return;
+            }
+
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = `<div class="flex items-center justify-center gap-2"><div class="spinner" style="border-color:rgba(255,255,255,0.3);border-left-color:white;"></div><span>Memproses...</span></div>`;
+
+            try {
+                const data = parseInput(input);
+                const updatedData = JSON.parse(JSON.stringify(groupedInventory || {}));
+
+                data.forEach(item => {
+                    if (!updatedData[item.sku]) {
+                        updatedData[item.sku] = {
+                            sku: item.sku,
+                            description: item.description,
+                            supplier: item.supplier,
+                            arrivals: []
+                        };
+                    } else {
+                        // Update deskripsi & supplier hanya jika nilainya tidak kosong
+                        if (item.description && item.description !== "Tanpa Deskripsi")
+                            updatedData[item.sku].description = item.description;
+                        if (item.supplier && item.supplier !== "-")
+                            updatedData[item.sku].supplier = item.supplier;
+                    }
+
+                    if (!Array.isArray(updatedData[item.sku].arrivals))
+                        updatedData[item.sku].arrivals = [];
+
+                    // FIX: tambah tanggal hanya jika belum ada (cegah duplikat)
+                    if (item.date && !updatedData[item.sku].arrivals.includes(item.date)) {
+                        updatedData[item.sku].arrivals.push(item.date);
+                    }
+                });
+
+                // Urutkan arrivals terbaru di atas untuk semua SKU
+                Object.keys(updatedData).forEach(sku => {
+                    if (Array.isArray(updatedData[sku].arrivals)) {
+                        updatedData[sku].arrivals = [...new Set(updatedData[sku].arrivals)]
+                            .sort((a, b) => b.localeCompare(a));
+                    }
+                });
+
+                await db.ref('inventory').set(updatedData);
+
+                // Reset form
+                document.getElementById('dataInput').value = "";
+                document.getElementById('fileInput').value = "";
+                document.getElementById('fileNameDisplay').innerText = "Atau tempel teks di bawah";
+                closeUploadModal();
+                alert(`Berhasil! ${data.length} baris data disinkronisasi ke Cloud.`);
+
+            } catch (e) {
+                console.error(e);
+                alert("Gagal upload data:\n\n" + e.message);
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = `Sinkronkan ke Cloud`;
+            }
+        }
+
+        // =============================================
+        // CLEANUP
+        // =============================================
+
+        async function processCleanup() {
+            const month      = document.getElementById('cleanupMonth').value;
+            const year       = document.getElementById('cleanupYear').value;
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            const bulanLabel = document.getElementById('cleanupMonth').options[document.getElementById('cleanupMonth').selectedIndex].text;
+
+            if (!confirm(`Hapus SEMUA riwayat bulan ${bulanLabel} ${year}?\n\nAksi ini tidak bisa dibatalkan.`)) return;
+
+            cleanupBtn.disabled = true;
+            cleanupBtn.innerText = "Menghapus...";
+
+            try {
+                const updatedData = JSON.parse(JSON.stringify(groupedInventory));
+                let deletedCount = 0;
+
+                Object.keys(updatedData).forEach(sku => {
+                    if (!Array.isArray(updatedData[sku].arrivals)) return;
+                    const before = updatedData[sku].arrivals.length;
+                    updatedData[sku].arrivals = updatedData[sku].arrivals.filter(dateStr => {
+                        const parts = dateStr.split('-');
+                        return !(parts[0] === year && parts[1] === month);
+                    });
+                    deletedCount += before - updatedData[sku].arrivals.length;
+                });
+
+                await db.ref('inventory').set(updatedData);
+                closeCleanupModal();
+                alert(`Selesai! ${deletedCount} entri riwayat berhasil dihapus.`);
+
+            } catch (e) {
+                alert("Gagal menghapus: " + e.message);
+                console.error(e);
+            } finally {
+                cleanupBtn.disabled = false;
+                cleanupBtn.innerText = "Hapus Permanen";
+            }
+        }
+
+        // =============================================
+        // MODAL DETAIL
+        // =============================================
 
         function openModal(sku) {
             const item = groupedInventory[sku];
             if (!item) return;
-            document.getElementById('modalTitle').innerText = item.description;
-            document.getElementById('modalSku').innerText = "KODE SKU: " + item.sku;
-            document.getElementById('modalSupplier').innerText = item.supplier;
+            document.getElementById('modalTitle').innerText    = item.description || '-';
+            document.getElementById('modalSku').innerText      = "KODE SKU: " + item.sku;
+            document.getElementById('modalSupplier').innerText = item.supplier || '-';
+
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
-            if (item.arrivals) {
-                item.arrivals.forEach((date, i) => {
+
+            const arrivals = item.arrivals || [];
+            if (arrivals.length === 0) {
+                historyList.innerHTML = `<p class="text-sm text-slate-400 italic">Belum ada riwayat kedatangan.</p>`;
+            } else {
+                arrivals.forEach((date, i) => {
                     const entry = document.createElement('div');
                     entry.className = "relative";
                     entry.innerHTML = `
                         <div class="absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-4 border-white ${i === 0 ? 'bg-fuchsia-600' : 'bg-fuchsia-200'} shadow-sm"></div>
                         <div class="bg-fuchsia-50/50 p-4 rounded-2xl border border-fuchsia-100/50">
-                            <p class="text-[8px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${item.arrivals.length - i}</p>
+                            <p class="text-[8px] font-black text-fuchsia-300 tracking-widest mb-1 uppercase">Log #${arrivals.length - i}</p>
                             <p class="text-sm font-bold text-fuchsia-900">${formatDate(date, true)}</p>
                         </div>
                     `;
                     historyList.appendChild(entry);
                 });
             }
+
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        // --- SISTEM PIN AMAN ---
+        // =============================================
+        // SISTEM PIN
+        // =============================================
+
         function openPinModal(actionTarget) {
             pendingAdminAction = actionTarget;
             document.getElementById('pinInput').value = '';
             document.getElementById('pinModal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('pinInput').focus(), 100);
+            setTimeout(() => document.getElementById('pinInput').focus(), 150);
         }
 
         function closePinModal() {
@@ -553,13 +682,10 @@
         }
 
         async function verifyPin() {
-            const pin = document.getElementById('pinInput').value;
-            if (!pin) {
-                alert("Harap masukkan PIN.");
-                return;
-            }
+            const pin = document.getElementById('pinInput').value.trim();
+            if (!pin) { alert("Harap masukkan PIN."); return; }
 
-            const verifyBtn = document.getElementById('verifyPinBtn');
+            const verifyBtn  = document.getElementById('verifyPinBtn');
             const pinSpinner = document.getElementById('pinSpinner');
             const pinBtnText = document.getElementById('pinBtnText');
 
@@ -569,46 +695,49 @@
 
             try {
                 const hashedInput = await hashPIN(pin);
-                const snapshot = await db.ref('settings/adminPin').once('value');
-                const dbPinHash = snapshot.val();
+                const snapshot    = await db.ref('settings/adminPin').once('value');
+                const dbPinHash   = snapshot.val();
 
                 if (!dbPinHash) {
-                    alert("Keamanan: PIN Admin belum diatur di Database! Silakan tambahkan 'settings/adminPin' di Firebase Console.");
+                    alert("Keamanan: PIN Admin belum diatur di Database!\nSilakan tambahkan 'settings/adminPin' di Firebase Console.");
                     document.getElementById('pinInput').value = '';
                     document.getElementById('pinInput').focus();
                     return;
                 }
 
-                let isMatch = false;
-                if (String(dbPinHash).length === 64) {
-                    isMatch = (hashedInput === String(dbPinHash));
-                } else {
-                    isMatch = (pin === String(dbPinHash));
-                    if (isMatch) console.warn("Peringatan Keamanan: Segera ubah PIN Anda menjadi format Hash melalui menu Ubah PIN.");
-                }
+                // Dukung PIN plaintext (lama) dan hash SHA-256 (baru)
+                const isHashFormat = String(dbPinHash).length === 64;
+                const isMatch      = isHashFormat
+                    ? hashedInput === String(dbPinHash)
+                    : pin === String(dbPinHash);
 
                 if (!isMatch) {
                     alert("PIN salah! Coba lagi.");
                     document.getElementById('pinInput').value = '';
                     document.getElementById('pinInput').focus();
-                } else {
-                    // PIN BERHASIL !
-                    const action = pendingAdminAction; // Simpan nilai aksi sebelum modal ditutup
-                    closePinModal(); // Fungsi ini mengatur ulang pendingAdminAction
-                    
-                    // Lanjutkan ke aksi yang diminta
-                    if (action === 'cleanup') {
-                        document.getElementById('cleanupModal').classList.remove('hidden');
-                    } else if (action === 'upload') {
-                        document.getElementById('uploadModal').classList.remove('hidden');
-                    } else if (action === 'changePin') {
-                        document.getElementById('changePinModal').classList.remove('hidden');
-                        setTimeout(() => document.getElementById('newPinInput').focus(), 100);
-                    }
+                    return;
                 }
+
+                if (!isHashFormat) {
+                    console.warn("⚠️ Keamanan: PIN disimpan sebagai plaintext. Segera ubah PIN melalui menu Ubah PIN.");
+                }
+
+                // PIN benar — simpan aksi dan tutup modal PIN
+                const action = pendingAdminAction;
+                closePinModal();
+
+                if (action === 'cleanup') {
+                    document.getElementById('cleanupModal').classList.remove('hidden');
+                } else if (action === 'upload') {
+                    document.getElementById('uploadModal').classList.remove('hidden');
+                } else if (action === 'changePin') {
+                    document.getElementById('changePinModal').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('newPinInput').focus(), 150);
+                }
+
             } catch (error) {
-                alert("Gagal verifikasi: Pastikan koneksi internet aktif.");
                 console.error(error);
+                alert("Gagal verifikasi: Pastikan koneksi internet aktif.");
             } finally {
                 verifyBtn.disabled = false;
                 pinSpinner.classList.add('hidden');
@@ -616,11 +745,10 @@
             }
         }
 
-        document.getElementById('pinInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') verifyPin();
-        });
+        // =============================================
+        // UBAH PIN
+        // =============================================
 
-        // --- SISTEM UBAH PIN BARU ---
         function closeChangePinModal() {
             document.getElementById('changePinModal').classList.add('hidden');
             document.getElementById('newPinInput').value = '';
@@ -628,33 +756,20 @@
         }
 
         async function saveNewPin() {
-            const newPin = document.getElementById('newPinInput').value;
+            const newPin     = document.getElementById('newPinInput').value;
             const confirmPin = document.getElementById('confirmNewPinInput').value;
-            const saveBtn = document.getElementById('savePinBtn');
+            const saveBtn    = document.getElementById('savePinBtn');
 
-            if (!newPin || !confirmPin) {
-                alert("Harap isi semua kolom PIN.");
-                return;
-            }
-
-            if (newPin !== confirmPin) {
-                alert("PIN baru dan konfirmasi tidak cocok!");
-                return;
-            }
-
-            if (newPin.length < 6) {
-                alert("PIN minimal 6 angka/karakter.");
-                return;
-            }
+            if (!newPin || !confirmPin) { alert("Harap isi semua kolom PIN."); return; }
+            if (newPin !== confirmPin)  { alert("PIN baru dan konfirmasi tidak cocok!"); return; }
+            if (newPin.length < 6)     { alert("PIN minimal 6 angka/karakter."); return; }
 
             saveBtn.disabled = true;
             saveBtn.innerText = "Menyimpan...";
 
             try {
-                // Enkripsi PIN baru sebelum disimpan
                 const hashedNewPin = await hashPIN(newPin);
                 await db.ref('settings/adminPin').set(hashedNewPin);
-                
                 alert("PIN Admin berhasil diubah!");
                 closeChangePinModal();
             } catch (error) {
@@ -666,51 +781,61 @@
             }
         }
 
-        function openCleanupModal() { openPinModal('cleanup'); }
-        function openUploadModal() { openPinModal('upload'); }
+        // =============================================
+        // UTILITAS MODAL & EVENT
+        // =============================================
 
         function closeCleanupModal() { document.getElementById('cleanupModal').classList.add('hidden'); }
-        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        
+        function closeUploadModal()  { document.getElementById('uploadModal').classList.add('hidden'); }
+        function closeModal()        { document.getElementById('modal').classList.add('hidden'); }
+
         function handleFileSelect(e) {
             const file = e.target.files[0];
             if (!file) return;
             document.getElementById('fileNameDisplay').innerText = "File: " + file.name;
             const reader = new FileReader();
-            reader.onload = (e) => { document.getElementById('dataInput').value = e.target.result; };
-            reader.readAsText(file);
+            reader.onload  = (ev) => { document.getElementById('dataInput').value = ev.target.result; };
+            reader.onerror = ()   => { alert("Gagal membaca file."); };
+            reader.readAsText(file, 'UTF-8');
         }
 
+        // FIX: search menyimpan query ke state, lalu memanggil applySearchAndRender
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase().trim();
-            const filtered = Object.values(groupedInventory).filter(i => i.sku.includes(val) || i.description.toLowerCase().includes(val) || i.supplier.toLowerCase().includes(val));
-            renderItems(filtered);
+            activeSearchQuery = e.target.value;
+            applySearchAndRender();
         });
 
-        window.onclick = (e) => { 
-            if(e.target.id === 'modal') closeModal(); 
-            if(e.target.id === 'uploadModal') closeUploadModal(); 
-            if(e.target.id === 'cleanupModal') closeCleanupModal(); 
-            if(e.target.id === 'pinModal') closePinModal(); 
-            if(e.target.id === 'changePinModal') closeChangePinModal(); 
-        };
-        
+        // Enter di field PIN = klik verifikasi
+        document.getElementById('pinInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') verifyPin();
+        });
+
+        // Klik backdrop modal untuk menutup
+        window.addEventListener('click', (e) => {
+            const modalMap = {
+                'modal':          closeModal,
+                'uploadModal':    closeUploadModal,
+                'cleanupModal':   closeCleanupModal,
+                'pinModal':       closePinModal,
+                'changePinModal': closeChangePinModal,
+            };
+            if (modalMap[e.target.id]) modalMap[e.target.id]();
+        });
+
+        // =============================================
+        // INIT
+        // =============================================
         window.onload = fetchData;
     </script>
 
     <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then((reg) => {
-                    console.log('Service Worker Registered', reg);
-                })
-                .catch((err) => {
-                    console.log('SW Failed', err);
-                });
-        });
-    }
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker Registered', reg))
+                    .catch(err => console.log('SW Failed', err));
+            });
+        }
     </script>
 </body>
 </html>
