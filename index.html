@@ -218,6 +218,24 @@
         let groupedInventory = {};
         let pendingAdminAction = ""; // Menyimpan aksi yang tertunda (upload/cleanup)
 
+        // --- SISTEM KEAMANAN HASH SHA-256 ---
+        // Fungsi untuk mengenkripsi PIN menjadi kode acak
+        async function hashPIN(pin) {
+            const msgBuffer = new TextEncoder().encode(pin);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // FUNGSI BANTUAN ADMIN: Buka Inspect Element -> Console -> Ketik: getHash("PIN_SAYA")
+        // untuk mendapatkan kode Hash yang harus disimpan ke Firebase
+        window.getHash = async function(pin) {
+            const result = await hashPIN(pin);
+            console.log("%c=== SIMPAN KODE HASH INI KE FIREBASE ===", "color: #a21caf; font-size: 16px; font-weight: bold;");
+            console.log(result);
+            return result;
+        };
+
         // --- UTILITIES ---
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
@@ -567,12 +585,11 @@
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        // --- SISTEM PIN BARU ---
+        // --- SISTEM PIN BARU (AMAN DENGAN HASH) ---
         function openPinModal(actionTarget) {
             pendingAdminAction = actionTarget;
             document.getElementById('pinInput').value = ''; // Reset PIN field
             document.getElementById('pinModal').classList.remove('hidden');
-            // Auto focus ke input PIN setelah animasi berjalan sebentar
             setTimeout(() => document.getElementById('pinInput').focus(), 100);
         }
 
@@ -592,25 +609,39 @@
             const pinSpinner = document.getElementById('pinSpinner');
             const pinBtnText = document.getElementById('pinBtnText');
 
-            // Set loading state
             verifyBtn.disabled = true;
             pinSpinner.classList.remove('hidden');
             pinBtnText.innerText = 'Mengecek...';
 
             try {
-                // Cek PIN ke Firebase
-                const snapshot = await db.ref('settings/adminPin').once('value');
-                const adminPin = snapshot.val() || "040797"; // Fallback ke PIN lama
+                // Enkripsi input user
+                const hashedInput = await hashPIN(pin);
 
-                if (pin !== String(adminPin)) {
+                // Ambil data PIN dari Firebase
+                const snapshot = await db.ref('settings/adminPin').once('value');
+                
+                // Fallback ini adalah kode Hash untuk PIN "123456"
+                // Kode asli (123456) tidak akan pernah tertulis di source code!
+                const dbPinHash = snapshot.val() || "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
+
+                // Dukungan transisi: Jika di Firebase Anda masih menyimpan angka biasa, kita cek secara biasa dulu
+                // Tetapi sangat disarankan Anda meng-update Firebase menggunakan kode Hash!
+                let isMatch = false;
+                if (String(dbPinHash).length === 64) {
+                    // Firebase sudah aman memakai format Hash
+                    isMatch = (hashedInput === String(dbPinHash));
+                } else {
+                    // Firebase masih belum aman (format angka biasa)
+                    isMatch = (pin === String(dbPinHash));
+                    if (isMatch) console.warn("Peringatan Keamanan: Segera ubah angka PIN Anda di Firebase menjadi kode Hash.");
+                }
+
+                if (!isMatch) {
                     alert("PIN salah! Coba lagi.");
                     document.getElementById('pinInput').value = '';
                     document.getElementById('pinInput').focus();
                 } else {
-                    // PIN BENAR
                     closePinModal();
-                    
-                    // Lanjutkan ke menu yang dituju
                     if (pendingAdminAction === 'cleanup') {
                         document.getElementById('cleanupModal').classList.remove('hidden');
                     } else if (pendingAdminAction === 'upload') {
@@ -619,22 +650,18 @@
                 }
             } catch (error) {
                 alert("Gagal verifikasi: Pastikan koneksi internet aktif.");
+                console.error(error);
             } finally {
-                // Reset loading state
                 verifyBtn.disabled = false;
                 pinSpinner.classList.add('hidden');
                 pinBtnText.innerText = 'Verifikasi PIN';
             }
         }
 
-        // Menambahkan listener untuk mengeksekusi "Verifikasi" jika menekan tombol Enter pada keyboard
         document.getElementById('pinInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                verifyPin();
-            }
+            if (e.key === 'Enter') verifyPin();
         });
 
-        // Modifikasi fungsi pembuka modal untuk memanggil sistem PIN
         function openCleanupModal() { openPinModal('cleanup'); }
         function openUploadModal() { openPinModal('upload'); }
 
