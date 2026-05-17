@@ -69,11 +69,15 @@
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-slate-300"></div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openCleanupModal()" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm active:scale-90">
+                        <!-- Tombol Ubah PIN Baru -->
+                        <button onclick="openPinModal('changePin')" class="p-2 bg-slate-50 text-slate-500 rounded-xl hover:bg-slate-100 transition-all shadow-sm active:scale-90" title="Ubah PIN">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4v-3l5.257-5.257A6 6 0 1115 7z"></path></svg>
+                        </button>
+                        <button onclick="openCleanupModal()" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all shadow-sm active:scale-90" title="Hapus Data">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
-                        <button onclick="openUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58-4-8 4s-8-1.79-8-4"></path></svg>
+                        <button onclick="openUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90" title="Upload Data">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -132,6 +136,22 @@
                         <span id="pinBtnText">Verifikasi PIN</span>
                     </button>
                     <button onclick="closePinModal()" class="w-full py-3 font-bold text-slate-400 hover:bg-slate-50 rounded-xl text-sm transition-all">Batal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Ubah PIN Baru -->
+        <div id="changePinModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-[130]">
+            <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl animate-slide-up text-center">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-slate-900">Ubah PIN Admin</h2>
+                    <p class="text-[10px] text-slate-500 mt-1">Masukkan PIN baru (minimal 6 angka).</p>
+                </div>
+                <input type="password" id="newPinInput" placeholder="PIN Baru" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-center text-xl tracking-widest font-black outline-none focus:border-fuchsia-500 text-slate-700 mb-3 transition-all" inputmode="numeric">
+                <input type="password" id="confirmNewPinInput" placeholder="Konfirmasi PIN" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-center text-xl tracking-widest font-black outline-none focus:border-fuchsia-500 text-slate-700 mb-6 transition-all" inputmode="numeric">
+                <div class="flex flex-col gap-3">
+                    <button id="savePinBtn" onclick="saveNewPin()" class="w-full py-3.5 font-bold text-white bg-slate-800 rounded-xl active:scale-95 transition-all text-sm shadow-lg shadow-slate-200">Simpan PIN Baru</button>
+                    <button onclick="closeChangePinModal()" class="w-full py-3 font-bold text-slate-400 hover:bg-slate-50 rounded-xl text-sm transition-all">Batal</button>
                 </div>
             </div>
         </div>
@@ -216,7 +236,7 @@
         const db = firebase.database();
         const STORAGE_KEY = "receiving_tracker_data_v2";
         let groupedInventory = {};
-        let pendingAdminAction = ""; // Menyimpan aksi yang tertunda (upload/cleanup)
+        let pendingAdminAction = ""; // Menyimpan aksi yang tertunda (upload/cleanup/changePin)
 
         // --- SISTEM KEAMANAN HASH SHA-256 ---
         // Fungsi untuk mengenkripsi PIN menjadi kode acak
@@ -227,29 +247,12 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // FUNGSI BANTUAN ADMIN: Buka Inspect Element -> Console -> Ketik: getHash("PIN_SAYA")
-        // untuk mendapatkan kode Hash yang harus disimpan ke Firebase
-        window.getHash = async function(pin) {
-            const result = await hashPIN(pin);
-            console.log("%c=== SIMPAN KODE HASH INI KE FIREBASE ===", "color: #a21caf; font-size: 16px; font-weight: bold;");
-            console.log(result);
-            return result;
-        };
-
         // --- UTILITIES ---
         function parseIndoDate(dateStr) {
             if (!dateStr) return null;
 
-            // Convert ke string & bersihkan
             dateStr = String(dateStr).trim();
-
-            // Hilangkan jam kalau ada
             dateStr = dateStr.split(' ')[0];
-
-            // Support:
-            // 11/05/2026
-            // 11-05-2026
-            // 11.05.2026
             const parts = dateStr.split(/[\/\-\.]/);
 
             if (parts.length !== 3) return null;
@@ -258,22 +261,14 @@
             let month = parseInt(parts[1], 10);
             let year = parseInt(parts[2], 10);
 
-            // Validasi angka
-            if (isNaN(day) || isNaN(month) || isNaN(year)) {
-                return null;
-            }
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
 
-            // Kalau tahun 2 digit
-            if (year < 100) {
-                year += 2000;
-            }
+            if (year < 100) year += 2000;
 
-            // Validasi
             if (day < 1 || day > 31) return null;
             if (month < 1 || month > 12) return null;
             if (year < 2020 || year > 2100) return null;
 
-            // Format final YYYY-MM-DD
             return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         }
 
@@ -360,13 +355,11 @@
             const input = document.getElementById('dataInput').value;
             const syncBtn = document.getElementById('syncBtn');
 
-            // Validasi input
             if (!input || input.trim() === "") {
                 alert("Pilih file atau tempel teks dulu.");
                 return;
             }
 
-            // Loading state
             syncBtn.disabled = true;
             syncBtn.innerHTML = `
                 <div class="flex items-center justify-center gap-2">
@@ -376,22 +369,12 @@
             `;
 
             try {
-                // Parse data input
                 const data = parseInput(input);
+                const updatedData = JSON.parse(JSON.stringify(groupedInventory || {}));
 
-                // Clone data lama supaya aman
-                const updatedData = JSON.parse(
-                    JSON.stringify(groupedInventory || {})
-                );
-
-                // Loop semua row upload
                 data.forEach(item => {
-                    // Skip kalau SKU kosong
                     if (!item.sku || item.sku.trim() === "") return;
 
-                    // =========================
-                    // BUAT SKU BARU
-                    // =========================
                     if (!updatedData[item.sku]) {
                         updatedData[item.sku] = {
                             sku: item.sku,
@@ -401,80 +384,42 @@
                         };
                     }
 
-                    // =========================
-                    // UPDATE INFO TERBARU
-                    // =========================
-                    updatedData[item.sku].description =
-                        item.description || updatedData[item.sku].description;
+                    updatedData[item.sku].description = item.description || updatedData[item.sku].description;
+                    updatedData[item.sku].supplier = item.supplier || updatedData[item.sku].supplier;
 
-                    updatedData[item.sku].supplier =
-                        item.supplier || updatedData[item.sku].supplier;
-
-                    // Pastikan arrivals array
                     if (!Array.isArray(updatedData[item.sku].arrivals)) {
                         updatedData[item.sku].arrivals = [];
                     }
 
-                    // =========================
-                    // TAMBAHKAN TANGGAL
-                    // =========================
-                    // SEKARANG AKAN SELALU NAMBAH
-                    // walaupun tanggal sama
                     if (item.date) {
                         updatedData[item.sku].arrivals.push(item.date);
                     }
                 });
 
-                // =========================
-                // SORT TANGGAL TERBARU
-                // =========================
                 Object.keys(updatedData).forEach(sku => {
                     if (Array.isArray(updatedData[sku].arrivals)) {
-                        updatedData[sku].arrivals.sort((a, b) => {
-                            return new Date(b) - new Date(a);
-                        });
+                        updatedData[sku].arrivals.sort((a, b) => new Date(b) - new Date(a));
                     }
                 });
 
-                // =========================
-                // UPLOAD KE FIREBASE
-                // =========================
                 await db.ref('inventory').set(updatedData);
 
-                // Update variable global
                 groupedInventory = updatedData;
-
-                // Simpan localStorage
-                localStorage.setItem(
-                    STORAGE_KEY,
-                    JSON.stringify(updatedData)
-                );
-
-                // Render ulang UI
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
                 renderItems(Object.values(updatedData));
-
-                // Update tanggal database
                 updateDatabaseDateLabel();
 
-                // Reset input
                 document.getElementById('dataInput').value = "";
                 document.getElementById('fileInput').value = "";
-                document.getElementById('fileNameDisplay').innerText =
-                    "Atau tempel teks di bawah";
+                document.getElementById('fileNameDisplay').innerText = "Atau tempel teks di bawah";
 
-                // Tutup modal
                 closeUploadModal();
-
-                // Success
                 alert("Berhasil Sinkronisasi Cloud!");
 
             } catch (e) {
                 console.error(e);
-                alert(
-                    "Gagal upload data:\n\n" + e.message
-                );
+                alert("Gagal upload data:\n\n" + e.message);
             } finally {
-                // Reset button
                 syncBtn.disabled = false;
                 syncBtn.innerHTML = `Sinkronkan ke Cloud`;
             }
@@ -585,10 +530,10 @@
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        // --- SISTEM PIN BARU (AMAN DENGAN HASH) ---
+        // --- SISTEM PIN AMAN ---
         function openPinModal(actionTarget) {
             pendingAdminAction = actionTarget;
-            document.getElementById('pinInput').value = ''; // Reset PIN field
+            document.getElementById('pinInput').value = '';
             document.getElementById('pinModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('pinInput').focus(), 100);
         }
@@ -614,26 +559,16 @@
             pinBtnText.innerText = 'Mengecek...';
 
             try {
-                // Enkripsi input user
                 const hashedInput = await hashPIN(pin);
-
-                // Ambil data PIN dari Firebase
                 const snapshot = await db.ref('settings/adminPin').once('value');
-                
-                // Fallback ini adalah kode Hash untuk PIN "123456"
-                // Kode asli (123456) tidak akan pernah tertulis di source code!
+                // PIN cadangan default adalah 123456 (terenkripsi menjadi 8d96...)
                 const dbPinHash = snapshot.val() || "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
 
-                // Dukungan transisi: Jika di Firebase Anda masih menyimpan angka biasa, kita cek secara biasa dulu
-                // Tetapi sangat disarankan Anda meng-update Firebase menggunakan kode Hash!
                 let isMatch = false;
                 if (String(dbPinHash).length === 64) {
-                    // Firebase sudah aman memakai format Hash
                     isMatch = (hashedInput === String(dbPinHash));
                 } else {
-                    // Firebase masih belum aman (format angka biasa)
                     isMatch = (pin === String(dbPinHash));
-                    if (isMatch) console.warn("Peringatan Keamanan: Segera ubah angka PIN Anda di Firebase menjadi kode Hash.");
                 }
 
                 if (!isMatch) {
@@ -641,11 +576,17 @@
                     document.getElementById('pinInput').value = '';
                     document.getElementById('pinInput').focus();
                 } else {
+                    // PIN BERHASIL !
                     closePinModal();
+                    
+                    // Lanjutkan ke aksi yang diminta
                     if (pendingAdminAction === 'cleanup') {
                         document.getElementById('cleanupModal').classList.remove('hidden');
                     } else if (pendingAdminAction === 'upload') {
                         document.getElementById('uploadModal').classList.remove('hidden');
+                    } else if (pendingAdminAction === 'changePin') {
+                        document.getElementById('changePinModal').classList.remove('hidden');
+                        setTimeout(() => document.getElementById('newPinInput').focus(), 100);
                     }
                 }
             } catch (error) {
@@ -661,6 +602,52 @@
         document.getElementById('pinInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') verifyPin();
         });
+
+        // --- SISTEM UBAH PIN BARU ---
+        function closeChangePinModal() {
+            document.getElementById('changePinModal').classList.add('hidden');
+            document.getElementById('newPinInput').value = '';
+            document.getElementById('confirmNewPinInput').value = '';
+        }
+
+        async function saveNewPin() {
+            const newPin = document.getElementById('newPinInput').value;
+            const confirmPin = document.getElementById('confirmNewPinInput').value;
+            const saveBtn = document.getElementById('savePinBtn');
+
+            if (!newPin || !confirmPin) {
+                alert("Harap isi semua kolom PIN.");
+                return;
+            }
+
+            if (newPin !== confirmPin) {
+                alert("PIN baru dan konfirmasi tidak cocok!");
+                return;
+            }
+
+            if (newPin.length < 6) {
+                alert("PIN minimal 6 angka/karakter.");
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Menyimpan...";
+
+            try {
+                // Enkripsi PIN baru sebelum disimpan
+                const hashedNewPin = await hashPIN(newPin);
+                await db.ref('settings/adminPin').set(hashedNewPin);
+                
+                alert("PIN Admin berhasil diubah!");
+                closeChangePinModal();
+            } catch (error) {
+                alert("Gagal menyimpan PIN baru. Pastikan koneksi internet aktif.");
+                console.error(error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Simpan PIN Baru";
+            }
+        }
 
         function openCleanupModal() { openPinModal('cleanup'); }
         function openUploadModal() { openPinModal('upload'); }
@@ -689,6 +676,7 @@
             if(e.target.id === 'uploadModal') closeUploadModal(); 
             if(e.target.id === 'cleanupModal') closeCleanupModal(); 
             if(e.target.id === 'pinModal') closePinModal(); 
+            if(e.target.id === 'changePinModal') closeChangePinModal(); 
         };
         
         window.onload = fetchData;
