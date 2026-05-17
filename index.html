@@ -77,7 +77,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                         <button onclick="openUploadModal()" class="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-xl hover:bg-fuchsia-100 transition-all shadow-sm active:scale-90" title="Upload Data">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58 4-8 4s-8-1.79-8-4"></path></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4m0 5c0 2.21-3.58-4-8 4s-8-1.79-8-4"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -246,6 +246,15 @@
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
+
+        // FUNGSI BANTUAN ADMIN: Buka Inspect Element -> Console -> Ketik: getHash("PIN_SAYA")
+        // untuk mendapatkan kode Hash yang harus disimpan ke Firebase
+        window.getHash = async function(pin) {
+            const result = await hashPIN(pin);
+            console.log("%c=== SIMPAN KODE HASH INI KE FIREBASE ===", "color: #a21caf; font-size: 16px; font-weight: bold;");
+            console.log(result);
+            return result;
+        };
 
         // --- UTILITIES ---
         function parseIndoDate(dateStr) {
@@ -561,14 +570,21 @@
             try {
                 const hashedInput = await hashPIN(pin);
                 const snapshot = await db.ref('settings/adminPin').once('value');
-                // PIN cadangan default adalah 123456 (terenkripsi menjadi 8d96...)
-                const dbPinHash = snapshot.val() || "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
+                const dbPinHash = snapshot.val();
+
+                if (!dbPinHash) {
+                    alert("Keamanan: PIN Admin belum diatur di Database! Silakan tambahkan 'settings/adminPin' di Firebase Console.");
+                    document.getElementById('pinInput').value = '';
+                    document.getElementById('pinInput').focus();
+                    return;
+                }
 
                 let isMatch = false;
                 if (String(dbPinHash).length === 64) {
                     isMatch = (hashedInput === String(dbPinHash));
                 } else {
                     isMatch = (pin === String(dbPinHash));
+                    if (isMatch) console.warn("Peringatan Keamanan: Segera ubah PIN Anda menjadi format Hash melalui menu Ubah PIN.");
                 }
 
                 if (!isMatch) {
