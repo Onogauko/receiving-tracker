@@ -696,7 +696,8 @@
             try {
                 const hashedInput = await hashPIN(pin);
                 const snapshot    = await db.ref('settings/adminPin').once('value');
-                const dbPinHash   = snapshot.val();
+                // FIX: strip tanda kutip ekstra dan whitespace yang mungkin tersimpan di Firebase
+                const dbPinHash   = String(snapshot.val() || "").replace(/^"+|"+$/g, '').trim();
 
                 if (!dbPinHash) {
                     alert("Keamanan: PIN Admin belum diatur di Database!\nSilakan tambahkan 'settings/adminPin' di Firebase Console.");
